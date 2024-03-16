@@ -38,6 +38,7 @@ export default function Home() {
                     width={1200}
                     height={500}
                     priority
+                    className={'rounded-lg m-20'}
                 />
             </div>
         </div>
