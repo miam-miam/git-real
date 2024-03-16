@@ -1,7 +1,11 @@
 use anyhow::anyhow;
+use governor::{DefaultDirectRateLimiter, Quota, RateLimiter};
 use itertools::Itertools;
 use piston_rs::ExecResponse;
 use std::fmt::{Display, Formatter, Write};
+use std::num::NonZeroU32;
+use std::sync::OnceLock;
+use std::time::Duration;
 
 #[derive(Copy, Clone, Debug)]
 pub enum Language {
@@ -220,6 +224,16 @@ pub async fn test_language(
         .iter()
         .map(|(_n, t)| t.to_string())
         .collect_vec();
+
+    static LIMITER: OnceLock<DefaultDirectRateLimiter> = OnceLock::new();
+
+    let limiter = LIMITER.get_or_init(|| {
+        RateLimiter::direct(
+            #[allow(deprecated)]
+            Quota::new(NonZeroU32::new(1).unwrap(), Duration::from_millis(300)).unwrap(),
+        )
+    });
+
     let executor = piston_rs::Executor::new()
         .set_language(language.name())
         .set_version("*")
@@ -229,6 +243,8 @@ pub async fn test_language(
                 .set_name(file_name.as_str())
                 .set_content(file_content.as_str()),
         );
+
+    limiter.until_ready().await;
 
     let response = client
         .execute(&executor)
@@ -242,9 +258,9 @@ pub async fn test_language(
 #[cfg(test)]
 mod test {
     use crate::executor::{test_language, FuncType, Function, Language};
+    use tokio::join;
 
-    #[tokio::test]
-    pub async fn test() {
+    async fn future() {
         let res = test_language(
             Language::Rust,
             Function {
@@ -260,5 +276,47 @@ mod test {
         .await
         .unwrap();
         println!("{res:?}")
+    }
+
+    #[tokio::test]
+    pub async fn test_rate_limiting() {
+        join!(
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future(),
+            future()
+        );
     }
 }
