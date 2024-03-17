@@ -31,6 +31,18 @@ pub struct UserInfo {
     pub default_language: Language,
 }
 
+#[derive(Deserialize, Serialize, Debug)]
+pub struct MeInfo {
+    pub id: i64,
+    pub name: Option<String>,
+    #[serde(rename(deserialize = "login"))]
+    pub username: String,
+    pub avatar_url: String,
+    #[serde(default)]
+    pub default_language: Language,
+    pub completed_correctly: bool,
+}
+
 async fn read_user(access_token: &AccessToken) -> anyhow::Result<UserInfo> {
     let client = reqwest::Client::new();
     let response = client

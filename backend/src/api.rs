@@ -4,12 +4,13 @@ use crate::executor;
 use crate::executor::Language;
 use crate::state::AppState;
 use actix_identity::Identity;
+use actix_web::cookie::time::macros::date;
 use actix_web::web::{Data, Json, Path};
-use actix_web::{get, post, web, App, HttpResponse, Responder, Scope};
+use actix_web::{get, post, web, HttpResponse, Scope};
 use chrono::Utc;
 use nom::HexDisplay;
 use rand::RngCore;
-use uuid::Uuid;
+use sqlx::Error;
 
 pub fn api_routes() -> Scope {
     web::scope("/api")
@@ -17,11 +18,12 @@ pub fn api_routes() -> Scope {
         .service(get_current_challenge)
         .service(submit_commit)
         .service(get_commit_by_id)
-        .service(get_all_commits)
         .service(get_user)
         .service(current_user)
         .service(post_reaction)
         .service(get_commit_reactions)
+        .service(get_user_commits)
+        .service(get_commits)
 }
 
 #[get("/")]
@@ -59,6 +61,7 @@ async fn get_current_challenge(db: Data<AppState>, identity: Identity) -> HttpRe
             };
             HttpResponse::Ok().json(res)
         }
+        Err(Error::RowNotFound) => HttpResponse::NoContent().finish(),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
@@ -89,7 +92,7 @@ async fn submit_commit(
 
     let res = ResCommit {
         id: 0,
-        commit_hash: data.as_slice().to_hex(16),
+        commit_hash: hex::encode(data),
         user_id,
         date: Utc::now(),
         title: new_commit.title.clone(),
@@ -102,6 +105,20 @@ async fn submit_commit(
 
     match db.add_commit(res).await {
         Ok(commit) => HttpResponse::Ok().json(commit),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+    }
+}
+
+#[get("/commits")]
+async fn get_commits(db: Data<AppState>, identity: Identity) -> HttpResponse {
+    if identity.id().is_err() {
+        return HttpResponse::NotFound().body("User id not found.");
+    };
+
+    let challenge = db.get_current_challenge().await.unwrap();
+
+    match db.get_past_challenge_commits(challenge.id).await {
+        Ok(commits) => HttpResponse::Ok().json(commits),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
@@ -121,16 +138,8 @@ async fn current_user(db: Data<AppState>, identity: Identity) -> HttpResponse {
         _ => return HttpResponse::NotFound().body("User id not found."),
     };
 
-    match db.get_user_by_id(user_id).await {
+    match db.get_me_info(user_id).await {
         Ok(user) => HttpResponse::Ok().json(user),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
-    }
-}
-
-#[get("/commits")]
-async fn get_all_commits(db: Data<AppState>) -> HttpResponse {
-    match db.get_all_commits().await {
-        Ok(commits) => HttpResponse::Ok().json(commits),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
@@ -152,7 +161,7 @@ async fn get_past_challenge(db: Data<AppState>, challenge_id: Path<i32>) -> Http
 }
 
 #[get("/challenges/{id}/commits")]
-async fn get_past_challenge_commits(db: Data<AppState>, challenge_id: Path<Uuid>) -> HttpResponse {
+async fn get_past_challenge_commits(db: Data<AppState>, challenge_id: Path<i32>) -> HttpResponse {
     match db
         .get_past_challenge_commits(challenge_id.into_inner())
         .await
@@ -179,8 +188,16 @@ async fn get_commit_reactions(db: Data<AppState>, identity: Identity, challenge_
 }
 
 #[get("/user/{id}")]
-async fn get_user(db: Data<AppState>, username: Path<String>) -> HttpResponse {
-    match db.get_user(&username.into_inner()).await {
+async fn get_user(db: Data<AppState>, user_id: Path<i64>) -> HttpResponse {
+    match db.get_user(user_id.into_inner()).await {
+        Ok(user) => HttpResponse::Ok().json(user),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+    }
+}
+
+#[get("/user/{id}/commits")]
+async fn get_user_commits(db: Data<AppState>, username: Path<i64>) -> HttpResponse {
+    match db.get_commit_by_user_id(username.into_inner()).await {
         Ok(user) => HttpResponse::Ok().json(user),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
