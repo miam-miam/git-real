@@ -20,6 +20,8 @@ pub fn api_routes() -> Scope {
         .service(get_all_commits)
         .service(get_user)
         .service(current_user)
+        .service(post_reaction)
+        .service(get_commit_reactions)
 }
 
 #[get("/")]
@@ -29,7 +31,7 @@ async fn hello() -> HttpResponse {
 
 #[get("/challenge")]
 async fn get_current_challenge(db: Data<AppState>, identity: Identity) -> HttpResponse {
-    let user_id = match identity.id() {
+    let user_id: i32 = match identity.id() {
         Ok(user_id) => user_id.parse().unwrap(),
         _ => return HttpResponse::NotFound().body("User id not found."),
     };
@@ -135,7 +137,7 @@ async fn get_all_commits(db: Data<AppState>) -> HttpResponse {
 
 #[get("/challenges")]
 async fn get_challenges(db: Data<AppState>) -> HttpResponse {
-    match db.get_past_challenges().await {
+    match db.get_challenges().await {
         Ok(challenges) => HttpResponse::Ok().json(challenges),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
@@ -143,7 +145,7 @@ async fn get_challenges(db: Data<AppState>) -> HttpResponse {
 
 #[get("/challenges/{id}")]
 async fn get_past_challenge(db: Data<AppState>, challenge_id: Path<i32>) -> HttpResponse {
-    match db.get_past_challenge_by_id(challenge_id.into_inner()).await {
+    match db.get_challenge_by_id(challenge_id.into_inner()).await {
         Ok(challenge) => HttpResponse::Ok().json(challenge),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
@@ -160,10 +162,40 @@ async fn get_past_challenge_commits(db: Data<AppState>, challenge_id: Path<Uuid>
     }
 }
 
+#[get("/commits/{id}/reactions")]
+async fn get_commit_reactions(db: Data<AppState>, identity: Identity, challenge_id: Path<i32>) -> HttpResponse {
+    let user_id: i32 = match identity.id() {
+        Ok(user_id) => user_id.parse().unwrap(),
+        _ => return HttpResponse::NotFound().body("User id not found."),
+    };
+
+    match db
+        .get_commit_reactions(user_id, challenge_id.into_inner())
+        .await
+    {
+        Ok(reactions) => HttpResponse::Ok().json(reactions),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+    }
+}
+
 #[get("/user/{id}")]
 async fn get_user(db: Data<AppState>, username: Path<String>) -> HttpResponse {
     match db.get_user(&username.into_inner()).await {
         Ok(user) => HttpResponse::Ok().json(user),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+    }
+}
+
+#[post("/commits/")]
+async fn post_reaction(
+    db: Data<AppState>,
+    user_id: Json<i32>,
+    commit_id: Json<i32>,
+    reaction_id: Json<i32>,
+    active: Json<bool>
+) -> HttpResponse {
+    match db.post_reaction(user_id.into_inner(), commit_id.into_inner(), reaction_id.into_inner(), active.into_inner()).await {
+        Ok(commit) => HttpResponse::Ok().json(commit),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
     }
 }
