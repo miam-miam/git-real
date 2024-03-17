@@ -136,7 +136,7 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
 
         return (
             <button key={index} onClick={onClick} type="button"
-                    className={`h-12 px-4 text-xl inline-flex items-center font-semibold rounded-full ${userReactions[key as keyof typeof reactions] ? 'bg-blue-700' : ''} text-white hover:bg-blue-700`}>
+                    className={`${blur} h-12 px-4 text-xl inline-flex items-center font-semibold rounded-full ${userReactions[key as keyof typeof reactions] ? 'bg-blue-700' : ''} text-white hover:bg-blue-700`}>
                 {emojiList[key as keyof typeof reactions]} {value}
             </button>
         )
@@ -190,7 +190,7 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
 
         return (
             <button key={index} onClick={onClick} type="button"
-                    className={`h-12 px-4 text-xl inline-flex items-center font-semibold rounded-full ${userReactions[key as keyof typeof reactions] ? 'bg-blue-700' : ''} text-white hover:bg-blue-700`}>
+                    className={`${blur} h-12 px-4 text-xl inline-flex items-center font-semibold rounded-full ${userReactions[key as keyof typeof reactions] ? 'bg-blue-700' : ''} text-white hover:bg-blue-700`}>
                 {emojiList[key as keyof typeof reactions]}
             </button>
         )
@@ -216,10 +216,20 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
             }
 
 
-            <h1 className={`${blur} text-xl font-bold text-left mb-1`}>{props.title}</h1>
-            <div className={`${blur} mb-5`}>
-                <p>{props.description}</p>
+            <div className={'flex flex-row'}>
+                <div>
+                    <h1 className={`${blur} text-xl font-bold text-left mb-1`}>{props.title}</h1>
+                    <div className={`${blur} mb-5`}>
+                        <p>{props.description}</p>
+                    </div>
+                </div>
+                <div>
+                    <div className={`${blur} float-end`}>
+                        <p className={'text-gray-500'}>{props.commit_hash}</p>
+                    </div>
+                </div>
             </div>
+
 
             <div className={`${blur}`}>
                 <CodeEditorWindow boilerPlate={props.solution} language={props.language} onChange={() => {
@@ -228,10 +238,10 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
 
             <div className={'mt-2 flex space-x-4'}>
                 {usedReactionsList}
-                <div className={`rounded-full border-2  border-gray-500`}>
+                <div className={`${blur} rounded-full border-2  border-gray-500`}>
                     <button type="button"
                             onClick={() => setSelectEmojiOpen(!selectEmojiOpen)}
-                            className="w-12 h-12 items-center text-xl inline-flex  font-semibold  text-gray-500 hover:border-gray-200 hover:text-gray-200">
+                            className={"w-12 h-12 items-center text-xl inline-flex  font-semibold  text-gray-500 hover:border-gray-200 hover:text-gray-200"}>
                         <div className='flex w-full justify-center'>
                             {selectEmojiOpen ? '-' : '+'}
                         </div>
