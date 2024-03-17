@@ -7,10 +7,6 @@ import {FormEvent, useState} from "react";
 import {CodeEditorWindow} from "@/app/components/EditorWindow";
 import {Countdown} from "@/app/components/Countdown";
 
-export default function Challenge() {
-
-    const [code, setCode] = useState("");
-
     const data = {
         title: "Two Sum",
         description: "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\n" +
@@ -28,6 +24,13 @@ export default function Challenge() {
         default_lang: "typescript"
     }
 
+export default function Challenge() {
+
+    const [code, setCode] = useState("");
+    const [currentLanguage, setCurrentLanguage] = useState(data.default_lang);
+
+
+
     const onChange = (data: string) => {
         setCode(data);
     };
@@ -40,12 +43,13 @@ export default function Challenge() {
         const data = Object.fromEntries(formData);
 
         data.code = code;
+        data.language = currentLanguage;
 
-        console.log(data)
+        console.log(data) // TODO post to the api
 
     }
 
-    const [currentLanguage, setCurrentLanguage] = useState(data.default_lang);
+
 
     const boilerplate = data.lang_boilerplate[currentLanguage as keyof typeof data.lang_boilerplate]
 
