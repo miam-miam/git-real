@@ -1,3 +1,4 @@
+use actix_session::Session;
 use crate::state::AppState;
 use actix_identity::Identity;
 use actix_web::http::header;
