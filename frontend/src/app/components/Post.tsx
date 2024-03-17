@@ -41,7 +41,7 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
         trash: false,
         tada: false,
         facepalm: false,
-        nerd:false,
+        nerd: false,
     })
     const [selectEmojiOpen, setSelectEmojiOpen] = useState(false)
 
@@ -57,7 +57,7 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
             .then((data) => setData(data || undefined))
             .catch((err) => console.error(err))
 
-        fetch(`http://localhost:3001/api/commmits/${props.id}/reactions`, {
+        fetch(`http://localhost:3001/api/commits/${props.id}/reactions`, {
             method: 'GET',
             credentials: "include",
             headers: {
@@ -72,8 +72,6 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
     if (!data) {
         return <div>Loading...</div>;
     }
-
-
 
 
     const blur = locked ? 'blur select-none' : ''
@@ -96,12 +94,31 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
 
         const onClick = async () => {
 
-            console.log('Clicked it!!', key, data.username)
+            if (userReactions[key as keyof typeof reactions]) {
+                setUserReactions({...userReactions, [key]: false})
+                setReactions({...reactions, [key]: value - 1})
+
+                await fetch('http://localhost:3001/api/reactions', {
+                    method: 'POST',
+                    credentials: "include",
+                    body: JSON.stringify({
+                        user_id: props.user_id,
+                        commit_id: props.id,
+                        reaction_id: Object.keys(reactions).indexOf(key),
+                        active: false
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+
+                return
+            }
 
             setUserReactions({...userReactions, [key]: true})
             setReactions({...reactions, [key]: value + 1})
 
-            const res = await fetch('http://localhost:3001/api/reactions', {
+            await fetch('http://localhost:3001/api/reactions', {
                 method: 'POST',
                 credentials: "include",
                 body: JSON.stringify({
@@ -114,10 +131,6 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
                     'Content-Type': 'application/json'
                 }
             })
-
-            const resData = await res.json()
-            console.log(resData)
-
 
         }
 
@@ -135,12 +148,31 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
 
         const onClick = async () => {
 
-            console.log('Clicked it!!', key, data.username)
+            if (userReactions[key as keyof typeof reactions]) {
+                setUserReactions({...userReactions, [key]: false})
+                setReactions({...reactions, [key]: value - 1})
+
+                await fetch('http://localhost:3001/api/reactions', {
+                    method: 'POST',
+                    credentials: "include",
+                    body: JSON.stringify({
+                        user_id: props.user_id,
+                        commit_id: props.id,
+                        reaction_id: Object.keys(reactions).indexOf(key),
+                        active: false
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+
+                return
+            }
 
             setUserReactions({...userReactions, [key]: true})
             setReactions({...reactions, [key]: value + 1})
 
-            const res = await fetch('http://localhost:3001/api/reactions', {
+            await fetch('http://localhost:3001/api/reactions', {
                 method: 'POST',
                 credentials: "include",
                 body: JSON.stringify({
@@ -153,10 +185,6 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
                     'Content-Type': 'application/json'
                 }
             })
-
-            const resData = await res.json()
-            console.log(resData)
-
 
         }
 
