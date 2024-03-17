@@ -1,6 +1,6 @@
 use crate::auth::UserInfo;
 use crate::challenge::DbChallenge;
-use crate::commit::{Reaction, ReactionStatus, ReactionTuple, ReqCommit, ResCommit};
+use crate::commit::{ReactionTuple, ReactionStatus, ReqCommit, ResCommit, Reaction};
 use chrono::Utc;
 use oauth2::basic::BasicClient;
 use sqlx::error::Error;
@@ -144,8 +144,8 @@ impl AppState {
         let mut vec = vec![];
 
         for reaction_id in 0..9 {
-            let reactions: Vec<Reaction> = sqlx::query_as!(
-                Reaction,
+            let reactions: Vec<ReactionTuple> = sqlx::query_as!(
+                ReactionTuple,
                 "SELECT * FROM user_reactions WHERE commit_id=$1 AND reaction_id=$2",
                 commit_id, reaction_id
             ).fetch_all(&self.db).await?;
@@ -168,26 +168,26 @@ impl AppState {
         )
     }
 
-    pub async fn post_reaction(&self, user_id: i32, commit_id: i32, reaction_id: i32, active: bool) -> Result<ReactionStatus, Error> {
+    pub async fn post_reaction(&self, reaction: Reaction) -> Result<ReactionStatus, Error> {
         let exists: bool = sqlx::query!(
             "SELECT * FROM user_reactions WHERE user_id=$1 AND commit_id=$2 AND reaction_id=$3",
-            user_id, commit_id, reaction_id
+            reaction.user_id, reaction.commit_id, reaction.reaction_id
         ).fetch_one(&self.db).await.is_ok();
 
-        if !exists && active {
+        if !exists && reaction.active {
             sqlx::query!(
                 "INSERT INTO user_reactions (reaction_id, user_id, commit_id) VALUES ($1, $2, $3)",
-                reaction_id, user_id, commit_id
+                reaction.reaction_id, reaction.user_id, reaction.commit_id
             ).execute(&self.db).await?;
         }
 
-        if exists && !active {
+        if exists && !reaction.active {
             sqlx::query!(
                 "DELETE FROM user_reactions WHERE user_id=$1 AND commit_id=$2 AND reaction_id=$3",
-                user_id, commit_id, reaction_id
+                reaction.user_id, reaction.commit_id, reaction.reaction_id
             ).execute(&self.db).await?;
         }
 
-        self.get_commit_reactions(user_id, commit_id).await
+        self.get_commit_reactions(reaction.user_id, reaction.commit_id).await
     }
 }

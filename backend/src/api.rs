@@ -1,5 +1,5 @@
 use crate::challenge::ResChallenge;
-use crate::commit::{ReqCommit, ResCommit};
+use crate::commit::{Reaction, ReqCommit, ResCommit};
 use crate::executor;
 use crate::executor::Language;
 use crate::state::AppState;
@@ -186,15 +186,12 @@ async fn get_user(db: Data<AppState>, username: Path<String>) -> HttpResponse {
     }
 }
 
-#[post("/commits/")]
+#[post("/reactions")]
 async fn post_reaction(
     db: Data<AppState>,
-    user_id: Json<i32>,
-    commit_id: Json<i32>,
-    reaction_id: Json<i32>,
-    active: Json<bool>
+    reaction: Json<Reaction>
 ) -> HttpResponse {
-    match db.post_reaction(user_id.into_inner(), commit_id.into_inner(), reaction_id.into_inner(), active.into_inner()).await {
+    match db.post_reaction(reaction.into_inner()).await {
         Ok(commit) => HttpResponse::Ok().json(commit),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string())
     }
