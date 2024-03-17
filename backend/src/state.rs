@@ -89,7 +89,7 @@ impl AppState {
 
     pub async fn add_commit(&self, commit: ResCommit) -> Result<ResCommit, Error> {
         let result = sqlx::query!(
-            "INSERT INTO commits (commit_hash, user_id, date, title, solution, is_valid, language, description, challenge_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+            "INSERT INTO commits (commit_hash, user_id, date, title, solution, is_valid, language, description, challenge_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id",
             commit.commit_hash,
             commit.user_id,
             commit.date,
@@ -100,19 +100,10 @@ impl AppState {
             commit.description,
             commit.challenge_id
         )
-            .execute(&self.db)
+            .fetch_one(&self.db)
             .await?;
 
-        // let commit = sqlx::query_as!(
-        //     Commit,
-        //     "SELECT * FROM commits WHERE commit_id=?",
-        //     commit_id
-        // )
-        //     .fetch_one(&self.db)
-        //     .await?;
-        //
-        // Ok(commit.into())
-        self.get_commit_by_id(commit.id).await
+        self.get_commit_by_id(result.id).await
     }
 
     pub async fn get_past_challenge_by_id(&self, id: i32) -> Result<DbChallenge, Error> {
