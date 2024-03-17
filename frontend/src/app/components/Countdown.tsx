@@ -2,9 +2,7 @@
 
 import {useEffect, useState} from "react";
 
-export const Countdown = ({ textSize }: { textSize: string }) => {
-
-    const timeLeft = 300;
+export const Countdown = ({ textSize, timeLeft }: { textSize: string, timeLeft: number }) => {
 
     const [counter, setCounter] = useState(timeLeft);
 
