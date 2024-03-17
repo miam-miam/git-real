@@ -23,3 +23,39 @@ pub struct ReqCommit {
     pub solution: String,
     pub language: Language,
 }
+
+#[derive(Serialize, Deserialize, Default)]
+pub struct ReactionStatus {
+    pub heart: i32,
+    pub rocket: i32,
+    pub thumbsup: i32,
+    pub thumbsdown: i32,
+    pub skull: i32,
+    pub trash: i32,
+    pub tada: i32,
+    pub facepalm: i32,
+    pub nerd: i32
+}
+
+#[derive(Serialize, Deserialize, sqlx::Type)]
+pub struct ReactionTuple {
+    pub id: i32,
+    pub commit_id: i32,
+    pub user_id: i32,
+    pub heart: i32,
+    pub rocket: i32,
+    pub thumbsup: i32,
+    pub thumbsdown: i32,
+    pub skull: i32,
+    pub trash: i32,
+    pub tada: i32,
+    pub facepalm: i32,
+    pub nerd: i32
+}
+
+#[derive(Serialize, Deserialize, sqlx::Type)]
+pub struct Reaction {
+    pub reaction_id: i32,
+    pub user_id: i32,
+    pub commit_id: i32,
+}
