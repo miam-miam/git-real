@@ -4,10 +4,13 @@ use itertools::Itertools;
 use piston_rs::ExecResponse;
 use serde::{Deserialize, Serialize};
 use sqlx::types::JsonValue;
+use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Write};
 use std::num::NonZeroU32;
 use std::sync::OnceLock;
 use std::time::Duration;
+
+const LANGUAGES: [Language; 3] = [Language::Rust, Language::Python, Language::TypeScript];
 
 #[derive(Copy, Clone, Debug, Serialize, Deserialize, Default, sqlx::Type, Eq, PartialEq, Hash)]
 #[repr(i32)]
@@ -43,6 +46,10 @@ impl Language {
             Language::Python => "py",
             Language::TypeScript => "ts",
         }
+    }
+
+    pub fn for_all_languages<T>(mut f: impl FnMut(Language) -> T) -> HashMap<Language, T> {
+        LANGUAGES.iter().copied().map(|l| (l, f(l))).collect()
     }
 }
 
@@ -129,6 +136,13 @@ impl Function {
                 format!("function {name}({inputs}): {output} {{\n    \n}};")
             }
         }
+    }
+
+    pub fn generate_example_input(&self) -> String {
+        self.inputs
+            .iter()
+            .map(|(n, t)| format!("{n} = {t}"))
+            .join(", ")
     }
 
     fn generate_input(name: &str, func_type: &FuncType, language: Language) -> String {

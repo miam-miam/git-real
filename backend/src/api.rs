@@ -1,11 +1,10 @@
+use crate::challenge::ResChallenge;
 use crate::commit::ReqCommit;
+use crate::executor::Language;
 use crate::state::AppState;
 use actix_identity::Identity;
 use actix_web::web::{Data, Json, Path};
 use actix_web::{get, post, web, App, HttpResponse, Responder, Scope};
-use chrono::{DateTime, Utc};
-use oauth2::reqwest::Error::Http;
-use std::sync::mpsc::channel;
 use uuid::Uuid;
 
 pub fn api_routes() -> Scope {
@@ -25,10 +24,35 @@ async fn hello() -> HttpResponse {
 }
 
 #[get("/challenge")]
-async fn get_current_challenge(db: Data<AppState>) -> HttpResponse {
+async fn get_current_challenge(db: Data<AppState>, identity: Identity) -> HttpResponse {
+    let user_id = match identity.id() {
+        Ok(user_id) => user_id.parse().unwrap(),
+        _ => return HttpResponse::NotFound().body("User id not found."),
+    };
+
+    let user = match db.get_user_by_id(user_id).await {
+        Ok(user) => user,
+        Err(err) => return HttpResponse::InternalServerError().body(err.to_string()),
+    };
+
     let data = db.get_current_challenge().await;
     match data {
-        Ok(challenge) => HttpResponse::Ok().json(challenge),
+        Ok(challenge) => {
+            let boilerplate =
+                Language::for_all_languages(|l| challenge.function.generate_function(l));
+            let res = ResChallenge {
+                id: challenge.id,
+                title: challenge.title,
+                description: challenge.description,
+                example_input: challenge.function.generate_example_input(),
+                example_output: format!("{}", challenge.function.output),
+                boilerplate,
+                default_language: user.default_language,
+                date_released: challenge.date_released,
+                deadline: challenge.deadline,
+            };
+            HttpResponse::Ok().json(res)
+        }
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
@@ -36,7 +60,9 @@ async fn get_current_challenge(db: Data<AppState>) -> HttpResponse {
 #[post("/commits")]
 async fn submit_commit(db: Data<AppState>, new_commit: Json<ReqCommit>) -> HttpResponse {
     // call Alec's API
-    // data.is_valid = validate(commit)
+    let challenge = db.get_current_challenge().await.unwrap();
+
+    let functions = Language::for_all_languages(|l| challenge.function.generate_function(l));
 
     // match db.add_commit(data).await {
     //     Ok(commit) => HttpResponse::Ok().json(commit),

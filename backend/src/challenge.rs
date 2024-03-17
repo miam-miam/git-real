@@ -16,7 +16,7 @@ pub struct DbChallenge {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct ReqChallenge {
+pub struct ResChallenge {
     pub id: i32,
     pub title: String,
     pub description: Option<String>,
