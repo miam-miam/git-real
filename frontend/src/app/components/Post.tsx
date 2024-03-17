@@ -217,15 +217,15 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
 
 
             <div className={'flex flex-row'}>
-                <div>
+                <div className={'w-full'}>
                     <h1 className={`${blur} text-xl font-bold text-left mb-1`}>{props.title}</h1>
                     <div className={`${blur} mb-5`}>
                         <p>{props.description}</p>
                     </div>
                 </div>
-                <div>
-                    <div className={`${blur} float-end`}>
-                        <p className={'text-gray-500'}>{props.commit_hash}</p>
+                <div className={'flex flex-row-reverse  '}>
+                    <div className={`${blur} pt-12`}>
+                        <code className={' text-gray-500 text-mono'}>{props.commit_hash}</code>
                     </div>
                 </div>
             </div>
