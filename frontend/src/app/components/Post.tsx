@@ -6,10 +6,43 @@ import Link from "next/link";
 import {ICommit} from "@/app/challenge/page";
 import {useEffect, useState} from "react";
 
+export interface IReactions {
+    heart: number
+    rocket: number
+    thumbsup: number
+    thumbsdown: number
+    skull: number
+    trash: number
+    tada: number
+    facepalm: number
+    nerd: number
+}
 
 export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
 
     const [data, setData] = useState<{ username: string, avatar_url: string }>()
+    const [reactions, setReactions] = useState<IReactions>({
+        heart: 0,
+        rocket: 0,
+        thumbsup: 0,
+        thumbsdown: 0,
+        skull: 0,
+        trash: 0,
+        tada: 0,
+        facepalm: 0,
+        nerd: 0
+    })
+    const [userReactions, setUserReactions] = useState({
+        heart: false,
+        rocket: false,
+        thumbsup: false,
+        thumbsdown: false,
+        skull: false,
+        trash: false,
+        tada: false,
+        facepalm: false,
+        nerd:false,
+    })
     const [selectEmojiOpen, setSelectEmojiOpen] = useState(false)
 
     useEffect(() => {
@@ -23,11 +56,23 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
             .then((res) => res.json())
             .then((data) => setData(data || undefined))
             .catch((err) => console.error(err))
+
+        fetch(`http://localhost:3001/api/commmits/${props.id}/reactions`, {
+            method: 'GET',
+            credentials: "include",
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then((res) => res.json())
+            .then((reactions) => setReactions(reactions || undefined))
+            .catch((err) => console.error(err))
     }, []);
 
     if (!data) {
         return <div>Loading...</div>;
     }
+
 
 
 
@@ -45,34 +90,80 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
         nerd: '🤓'
     }
 
-    const usedReactionsList = Object.entries(props.reactions).map((reaction) => {
+    const usedReactionsList = Object.entries(reactions).map((reaction, index) => {
         const [key, value] = reaction
         if (value === 0) return null
 
-        const onClick = () => {
-            console.log('clicked button with emoji', key, data.username)
+        const onClick = async () => {
+
+            console.log('Clicked it!!', key, data.username)
+
+            setUserReactions({...userReactions, [key]: true})
+            setReactions({...reactions, [key]: value + 1})
+
+            const res = await fetch('http://localhost:3001/api/reactions', {
+                method: 'POST',
+                credentials: "include",
+                body: JSON.stringify({
+                    user_id: props.user_id,
+                    commit_id: props.id,
+                    reaction_id: Object.keys(reactions).indexOf(key),
+                    active: true
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+
+            const resData = await res.json()
+            console.log(resData)
+
+
         }
 
         return (
-            <button onClick={onClick} type="button"
-                    className={`h-12 px-4 text-xl inline-flex items-center font-semibold rounded-full ${props.user_reactions[key as keyof typeof props.reactions] ? 'bg-blue-700' : ''} text-white hover:bg-blue-700`}>
-                {emojiList[key as keyof typeof props.reactions]} {value}
+            <button key={index} onClick={onClick} type="button"
+                    className={`h-12 px-4 text-xl inline-flex items-center font-semibold rounded-full ${userReactions[key as keyof typeof reactions] ? 'bg-blue-700' : ''} text-white hover:bg-blue-700`}>
+                {emojiList[key as keyof typeof reactions]} {value}
             </button>
         )
     })
 
-    const unusedReactionsList = Object.entries(props.reactions).map((reaction) => {
+    const unusedReactionsList = Object.entries(reactions).map((reaction, index) => {
         const [key, value] = reaction
         if (value !== 0) return null
 
-        const onClick = () => {
-            console.log('clicked button with emoji', key, data.username)
+        const onClick = async () => {
+
+            console.log('Clicked it!!', key, data.username)
+
+            setUserReactions({...userReactions, [key]: true})
+            setReactions({...reactions, [key]: value + 1})
+
+            const res = await fetch('http://localhost:3001/api/reactions', {
+                method: 'POST',
+                credentials: "include",
+                body: JSON.stringify({
+                    user_id: props.user_id,
+                    commit_id: props.id,
+                    reaction_id: Object.keys(reactions).indexOf(key),
+                    active: true
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+
+            const resData = await res.json()
+            console.log(resData)
+
+
         }
 
         return (
-            <button onClick={onClick} type="button"
-                    className={`h-12 px-4 text-xl inline-flex items-center font-semibold rounded-full ${props.user_reactions[key as keyof typeof props.reactions] ? 'bg-blue-700' : ''} text-white hover:bg-blue-700`}>
-                {emojiList[key as keyof typeof props.reactions]}
+            <button key={index} onClick={onClick} type="button"
+                    className={`h-12 px-4 text-xl inline-flex items-center font-semibold rounded-full ${userReactions[key as keyof typeof reactions] ? 'bg-blue-700' : ''} text-white hover:bg-blue-700`}>
+                {emojiList[key as keyof typeof reactions]}
             </button>
         )
     })
