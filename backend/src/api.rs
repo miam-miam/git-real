@@ -168,10 +168,7 @@ async fn get_past_challenge(db: Data<AppState>, challenge_id: Path<i32>) -> Http
 
 #[get("/challenges/{id}/commits")]
 async fn get_past_challenge_commits(db: Data<AppState>, challenge_id: Path<i32>) -> HttpResponse {
-    match db
-        .get_past_challenge_commits(challenge_id.into_inner())
-        .await
-    {
+    match db.get_past_challenge_commits().await {
         Ok(commits) => HttpResponse::Ok().json(commits),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
