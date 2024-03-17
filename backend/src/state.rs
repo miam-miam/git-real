@@ -42,14 +42,11 @@ impl AppState {
         Ok(result)
     }
 
-    pub async fn get_user(&self, username: &str) -> Result<UserInfo, Error> {
-        let result: UserInfo = sqlx::query_as!(
-            UserInfo,
-            "SELECT * FROM public.users WHERE username=$1",
-            username
-        )
-        .fetch_one(&self.db)
-        .await?;
+    pub async fn get_user(&self, user_id: i64) -> Result<UserInfo, Error> {
+        let result: UserInfo =
+            sqlx::query_as!(UserInfo, "SELECT * FROM public.users WHERE id=$1", user_id)
+                .fetch_one(&self.db)
+                .await?;
 
         Ok(result)
     }

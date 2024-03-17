@@ -170,8 +170,8 @@ async fn get_past_challenge_commits(db: Data<AppState>, challenge_id: Path<i32>)
 }
 
 #[get("/user/{id}")]
-async fn get_user(db: Data<AppState>, username: Path<String>) -> HttpResponse {
-    match db.get_user(&username.into_inner()).await {
+async fn get_user(db: Data<AppState>, user_id: Path<i64>) -> HttpResponse {
+    match db.get_user(user_id.into_inner()).await {
         Ok(user) => HttpResponse::Ok().json(user),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
