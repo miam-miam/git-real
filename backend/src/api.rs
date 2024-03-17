@@ -108,7 +108,7 @@ async fn submit_commit(
 
 #[get("/commits")]
 async fn get_commits(db: Data<AppState>, identity: Identity) -> HttpResponse {
-    if let Err(_) = identity.id() {
+    if identity.id().is_err() {
         return HttpResponse::NotFound().body("User id not found.");
     };
 
