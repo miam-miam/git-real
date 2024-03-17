@@ -1,10 +1,11 @@
-use actix_session::Session;
-use actix_web::{web, HttpResponse, Responder, Scope};
 use crate::state::AppState;
+use actix_identity::Identity;
 use actix_web::http::header;
-use oauth2::{AccessToken, AuthorizationCode, CsrfToken, PkceCodeChallenge, TokenResponse};
+use actix_web::web::Redirect;
+use actix_web::{web, HttpMessage, HttpRequest, HttpResponse, Responder, Scope};
 use oauth2::reqwest::async_http_client;
 use oauth2::Scope as OAuthScope;
+use oauth2::{AccessToken, AuthorizationCode, CsrfToken, PkceCodeChallenge, TokenResponse};
 use serde::{Deserialize, Serialize};
 
 pub fn auth_routes() -> Scope {
@@ -19,11 +20,11 @@ pub fn auth_routes() -> Scope {
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct UserInfo {
-    id: u64,
-    name: Option<String>,
+    pub id: i64,
+    pub name: Option<String>,
     #[serde(rename(deserialize = "login"))]
-    username: String,
-    avatar_url: String,
+    pub username: String,
+    pub avatar_url: String,
 }
 
 async fn read_user(access_token: &AccessToken) -> anyhow::Result<UserInfo> {
@@ -34,7 +35,6 @@ async fn read_user(access_token: &AccessToken) -> anyhow::Result<UserInfo> {
         .header("User-Agent", "git-real")
         .send()
         .await?;
-
 
     Ok(response.json().await?)
 }
@@ -57,8 +57,6 @@ async fn login(data: web::Data<AppState>) -> HttpResponse {
         .finish()
 }
 
-
-
 #[derive(Deserialize)]
 struct AuthRequest {
     code: String,
@@ -66,10 +64,10 @@ struct AuthRequest {
 }
 
 async fn github_oauth_redirect(
-    session: Session,
+    request: HttpRequest,
     data: web::Data<AppState>,
     params: web::Query<AuthRequest>,
-) -> HttpResponse {
+) -> impl Responder {
     let code = AuthorizationCode::new(params.code.clone());
     let _state = CsrfToken::new(params.state.clone());
 
@@ -77,16 +75,22 @@ async fn github_oauth_redirect(
     let token = &data
         .oauth
         .exchange_code(code)
-        .request_async(async_http_client).await
+        .request_async(async_http_client)
+        .await
         .expect("exchange_code failed");
 
     let user_info = read_user(token.access_token()).await.unwrap();
 
-    session.insert("login", user_info.username.clone()).unwrap();
+    data.add_or_update_user(&user_info).await.unwrap();
 
-    HttpResponse::Ok().json(user_info)
+    Identity::login(&request.extensions(), user_info.id.to_string()).unwrap();
+
+    let env = std::env::var("FRONTEND_REDIRECT_URL").unwrap();
+
+    Redirect::to(env)
+    // HttpResponse::Ok().body(format!("github done! {env}"))
 }
-pub async fn logout(session: Session) -> impl Responder {
-    session.purge();
+pub async fn logout(identity: Identity) -> impl Responder {
+    identity.logout();
     HttpResponse::Ok().body("Logged out")
 }
