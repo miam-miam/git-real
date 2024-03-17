@@ -1,4 +1,3 @@
-use crate::challenge::ResChallenge;
 use crate::commit::{Reaction, ReqCommit, ResCommit};
 use crate::challenge::{DbChallenge, ResChallenge};
 use crate::executor;
