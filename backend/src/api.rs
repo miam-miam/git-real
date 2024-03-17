@@ -90,7 +90,7 @@ async fn submit_commit(
 
     let res = ResCommit {
         id: 0,
-        commit_hash: format!("{:x?}", data),
+        commit_hash: hex::encode(data),
         user_id,
         date: Utc::now(),
         title: new_commit.title.clone(),
