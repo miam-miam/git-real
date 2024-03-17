@@ -1,5 +1,6 @@
 use crate::challenge::ResChallenge;
 use crate::commit::{Reaction, ReqCommit, ResCommit};
+use crate::challenge::{DbChallenge, ResChallenge};
 use crate::executor;
 use crate::executor::Language;
 use crate::state::AppState;
@@ -61,7 +62,6 @@ async fn get_current_challenge(db: Data<AppState>, identity: Identity) -> HttpRe
             };
             HttpResponse::Ok().json(res)
         }
-        Err(Error::RowNotFound) => HttpResponse::NoContent().finish(),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
@@ -77,15 +77,20 @@ async fn submit_commit(
         _ => return HttpResponse::NotFound().body("User id not found."),
     };
 
-    let challenge = db.get_current_challenge().await.unwrap();
+    let challenge = match db.get_current_challenge().await {
+        Ok(challenge) => challenge,
+        Err(err) => return HttpResponse::InternalServerError().body(err.to_string())
+    };
 
-    let (is_valid, _exec_result) = executor::test_language(
+    let (is_valid, _exec_result) = match executor::test_language(
         new_commit.language,
         challenge.function,
         new_commit.solution.as_str(),
     )
-    .await
-    .unwrap();
+    .await {
+        Ok(tuple) => tuple,
+        Err(err) => return HttpResponse::InternalServerError().body(err.to_string())
+    };
 
     let mut data = [0u8; 16];
     rand::thread_rng().fill_bytes(&mut data);
@@ -115,7 +120,10 @@ async fn get_commits(db: Data<AppState>, identity: Identity) -> HttpResponse {
         return HttpResponse::NotFound().body("User id not found.");
     };
 
-    let challenge = db.get_current_challenge().await.unwrap();
+    let challenge = match db.get_current_challenge().await {
+        Ok(challenge) => challenge,
+        Err(err) => return HttpResponse::InternalServerError().body(err.to_string()),
+    };
 
     match db.get_past_challenge_commits(challenge.id).await {
         Ok(commits) => HttpResponse::Ok().json(commits),
@@ -144,13 +152,13 @@ async fn current_user(db: Data<AppState>, identity: Identity) -> HttpResponse {
     }
 }
 
-#[get("/challenges")]
-async fn get_challenges(db: Data<AppState>) -> HttpResponse {
-    match db.get_challenges().await {
-        Ok(challenges) => HttpResponse::Ok().json(challenges),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
-    }
-}
+// #[get("/challenges")]
+// async fn get_challenges(db: Data<AppState>) -> HttpResponse {
+//     match db.get_challenges().await {
+//         Ok(challenges) => HttpResponse::Ok().json(challenges),
+//         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+//     }
+// }
 
 #[get("/challenges/{id}")]
 async fn get_past_challenge(db: Data<AppState>, challenge_id: Path<i32>) -> HttpResponse {

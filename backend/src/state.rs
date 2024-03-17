@@ -21,7 +21,7 @@ impl AppState {
     pub async fn get_current_challenge(&self) -> Result<DbChallenge, Error> {
         let result: DbChallenge = sqlx::query_as!(
             DbChallenge,
-            "SELECT * FROM public.challenges WHERE date_released <= $1 AND deadline >= $1",
+            "SELECT * FROM public.challenges WHERE date_released <= $1 ORDER BY deadline DESC LIMIT 1",
             Utc::now()
         )
         .fetch_one(&self.db)
@@ -159,7 +159,6 @@ impl AppState {
         .await?;
         Ok(result)
     }
-
 
 
     pub async fn get_commit_reactions(&self, user_id: i32, commit_id: i32) -> Result<ReactionStatus, Error> {
