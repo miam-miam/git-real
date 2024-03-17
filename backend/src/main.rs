@@ -1,5 +1,6 @@
 mod auth;
 mod state;
+mod executor;
 mod api;
 mod challenge;
 mod commit;
