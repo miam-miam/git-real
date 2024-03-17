@@ -119,7 +119,7 @@ async fn current_user(db: Data<AppState>, identity: Identity) -> HttpResponse {
         _ => return HttpResponse::NotFound().body("User id not found."),
     };
 
-    match db.get_user_by_id(user_id).await {
+    match db.get_me_info(user_id).await {
         Ok(user) => HttpResponse::Ok().json(user),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }

@@ -1,4 +1,4 @@
-use crate::auth::UserInfo;
+use crate::auth::{MeInfo, UserInfo};
 use crate::challenge::DbChallenge;
 use crate::commit::{ReqCommit, ResCommit};
 use chrono::Utc;
@@ -73,6 +73,27 @@ impl AppState {
             .fetch_one(&self.db)
             .await?;
         Ok(user)
+    }
+
+    pub async fn get_me_info(&self, user_id: i64) -> anyhow::Result<MeInfo> {
+        let user = sqlx::query_as!(UserInfo, "SELECT * FROM users WHERE id = $1", user_id)
+            .fetch_one(&self.db)
+            .await?;
+        let record = sqlx::query!(
+            "SELECT is_valid FROM commits WHERE user_id = $1 AND is_valid = 'true' ORDER by date DESC LIMIT 1",
+            user_id
+        )
+        .fetch_optional(&self.db)
+        .await?;
+
+        Ok(MeInfo {
+            id: user.id,
+            name: user.name,
+            username: user.username,
+            avatar_url: user.avatar_url,
+            default_language: user.default_language,
+            completed_correctly: record.is_some(),
+        })
     }
 
     pub async fn add_commit(&self, commit: ResCommit) -> Result<ResCommit, Error> {
