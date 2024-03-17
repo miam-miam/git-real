@@ -336,13 +336,13 @@ export const monacoTheme = {
   "colors": {
     "editor.foreground": "#f6f8fa",
     "editor.background": "#24292e",
-    "editor.selectionBackground": "#4c2889",
-    "editor.inactiveSelectionBackground": "#444d56",
-    "editor.lineHighlightBackground": "#444d56",
+    "editor.selectionBackground": "#6da0b2",
+    "editor.inactiveSelectionBackground": "#2c3238",
+    "editor.lineHighlightBackground": "#2c3238",
     "editorCursor.foreground": "#ffffff",
     "editorWhitespace.foreground": "#6a737d",
     "editorIndentGuide.background": "#6a737d",
     "editorIndentGuide.activeBackground": "#f6f8fa",
-    "editor.selectionHighlightBorder": "#444d56"
+    "editor.selectionHighlightBorder": "#2c3238"
   }
 }
