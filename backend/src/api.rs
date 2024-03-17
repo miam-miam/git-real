@@ -4,6 +4,7 @@ use crate::executor;
 use crate::executor::Language;
 use crate::state::AppState;
 use actix_identity::Identity;
+use actix_web::cookie::time::macros::date;
 use actix_web::web::{Data, Json, Path};
 use actix_web::{get, post, web, HttpResponse, Scope};
 use chrono::Utc;
@@ -89,7 +90,7 @@ async fn submit_commit(
 
     let res = ResCommit {
         id: 0,
-        commit_hash: data.as_slice().to_hex(16),
+        commit_hash: format!("{:x?}", data),
         user_id,
         date: Utc::now(),
         title: new_commit.title.clone(),
