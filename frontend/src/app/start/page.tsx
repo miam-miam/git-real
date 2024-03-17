@@ -76,14 +76,6 @@ export default function StartPage() {
                 <h3 className="text-2xl font-bold mb-10 text-center">
                     Last GitReal was {timeAgo.format(lastGitRealEndTime)}
                 </h3>
-                <div className='grid place-items-center'>
-                    <Link href={'editor'}>
-                        <button type="button"
-                                className="py-3 px-4 inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-gray-200 text-gray-100 hover:bg-white hover:text-gray-950">
-                            Previous Challenges
-                        </button>
-                    </Link>
-                </div>
             </div>
         </div>
     );
