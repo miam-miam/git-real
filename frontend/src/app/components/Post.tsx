@@ -4,49 +4,31 @@ import Image from "next/image";
 import {CodeEditorWindow} from "@/app/components/EditorWindow";
 import Link from "next/link";
 import {ICommit} from "@/app/challenge/page";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 
-interface IPost {
-    id: string
-    username?: string
-    profile_picture: string
-    title: string
-    description: string
-    language: string
-    code: string
-    locked: boolean
-    reactions: {
-        heart: number
-        rocket: number
-        thumbsup: number
-        thumbsdown: number
-        skull: number
-        trash: number
-        tada: number
-        facepalm: number
-        nerd: number
+
+export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
+
+    const [data, setData] = useState<{ username: string, avatar_url: string }>()
+
+    useEffect(() => {
+        fetch(`http://localhost:3001/api/user/${props.user_id}`, {
+            method: 'GET',
+            credentials: "include",
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then((res) => res.json())
+            .then((data) => setData(data || undefined))
+            .catch((err) => console.error(err))
+    }, []);
+
+    if (!data) {
+        return <div>Loading...</div>;
     }
-    user_reactions: {
-        heart: boolean
-        rocket: boolean
-        thumbsup: boolean
-        thumbsdown: boolean
-        skull: boolean
-        trash: boolean
-        tada: boolean
-        facepalm: boolean
-        nerd: boolean
-    }
-}
-
-
-export const Post = ({props}: { props: IPost }) => {
 
     const [selectEmojiOpen, setSelectEmojiOpen] = useState(false)
-
-
-
-export const Post = ({ props, locked }: { props: ICommit, locked: boolean }) => {
 
     const blur = locked ? 'blur select-none' : ''
 
@@ -67,7 +49,7 @@ export const Post = ({ props, locked }: { props: ICommit, locked: boolean }) => 
         if (value === 0) return null
 
         const onClick = () => {
-            console.log('clicked button with emoji', key, props.username)
+            console.log('clicked button with emoji', key, data.username)
         }
 
         return (
@@ -83,7 +65,7 @@ export const Post = ({ props, locked }: { props: ICommit, locked: boolean }) => 
         if (value !== 0) return null
 
         const onClick = () => {
-            console.log('clicked button with emoji', key, props.username)
+            console.log('clicked button with emoji', key, data.username)
         }
 
         return (
@@ -99,16 +81,16 @@ export const Post = ({ props, locked }: { props: ICommit, locked: boolean }) => 
         <div className="min-w-[1000px] flex flex-col mb-24">
 
             {
-                props.username ? (
-                  <div className="flex flex-row items-center mb-5">
-                <Image src={props.avatar_url} className="w-10 h-10 rounded-full mr-3"
-                       alt={`${props.username} profile picture`} width={400} height={400}/>
-                <Link
-                    href={`https://github.com/${props.username}`}
-                >
-                <h2 className="text-xl font-bold">@{props.username}</h2>
-                </Link>
-            </div>
+                data.username ? (
+                    <div className="flex flex-row items-center mb-5">
+                        <Image src={data.avatar_url} className="w-10 h-10 rounded-full mr-3"
+                               alt={`${data.username} profile picture`} width={400} height={400}/>
+                        <Link
+                            href={`https://github.com/${data.username}`}
+                        >
+                            <h2 className="text-xl font-bold">@{data.username}</h2>
+                        </Link>
+                    </div>
 
                 ) : null
             }
