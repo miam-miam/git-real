@@ -26,3 +26,4 @@ piston_rs = "0.4.3"
 governor = "0.6.3"
 itertools = "0.12.1"
 uuid = { version = "1.7.0", features = ["v4", "serde"] }
+actix-cors = "0.7.0"
