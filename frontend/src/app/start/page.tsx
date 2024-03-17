@@ -30,7 +30,7 @@ export default async function StartPage() {
 
     if (happeningNow) {
 
-        const secondsSinceLastGitReal = (now - lastGitRealStartTime) / 1000;
+        const secondsToDeadline = (lastGitRealEndTime - now) / 1000;
 
         return (
             <div className="max-w-7xl relative flex place-items-center">
@@ -39,7 +39,7 @@ export default async function StartPage() {
                         It's GitReal time!
                     </h1>
                     <div className="text-2xl font-bold mb-10 text-center">
-                        <Countdown textSize={"text-6xl"} timeLeft={secondsSinceLastGitReal}/>
+                        <Countdown textSize={"text-6xl"} timeLeft={secondsToDeadline}/>
                     </div>
                     <div className='grid place-items-center'>
                         <Link href={'challenge'}>
