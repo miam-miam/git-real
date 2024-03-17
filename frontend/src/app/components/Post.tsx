@@ -5,7 +5,7 @@ import {CodeEditorWindow} from "@/app/components/EditorWindow";
 import Link from "next/link";
 
 interface IPost {
-    username: string
+    username?: string
     profile_picture: string
     title: string
     description: string
@@ -30,7 +30,9 @@ export const Post = ({ props }: { props: IPost }) => {
             {/*    </div>*/}
             {/*</div>*/}
 
-            <div className="flex flex-row items-center mb-5">
+            {
+                props.username ? (
+                                <div className="flex flex-row items-center mb-5">
                 <Image src={props.profile_picture} className="w-10 h-10 rounded-full mr-3"
                        alt={`${props.username} profile picture`} width={400} height={400}/>
                 <Link
@@ -39,6 +41,9 @@ export const Post = ({ props }: { props: IPost }) => {
                 <h2 className="text-xl font-bold">@{props.username}</h2>
                 </Link>
             </div>
+                ) : null
+            }
+
 
             <h1 className={`${blur} text-xl font-bold text-left mb-1`}>{props.title}</h1>
             <div className={`${blur} mb-5`}>
