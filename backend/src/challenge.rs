@@ -1,27 +1,29 @@
+use crate::executor::{Function, Language};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+use sqlx::types::Json;
+use std::collections::HashMap;
 
-#[derive(Serialize, Deserialize, sqlx::Type)]
-pub struct Challenge {
-    #[serde(skip_serializing)]
+#[derive(Serialize, Deserialize, sqlx::FromRow)]
+pub struct DbChallenge {
     pub id: i32,
-    #[serde(skip_serializing)]
-    pub challenge_id: Uuid,
     pub title: String,
-    pub description: String,
-    pub example_input: String,
-    pub example_output: String,
+    pub description: Option<String>,
+    #[sqlx(json)]
+    pub function: Function,
     pub date_released: DateTime<Utc>,
     pub deadline: DateTime<Utc>,
-    #[serde(skip_serializing)]
-    pub current: bool,
 }
 
-// #[derive(Serialize, Deserialize, sqlx::Type)]
-// struct LangBoilerplate {
-//     python: String,
-//     javascript: String,
-//     java: String,
-//     cpp: String
-// }
+#[derive(Serialize, Deserialize)]
+pub struct ReqChallenge {
+    pub id: i32,
+    pub title: String,
+    pub description: Option<String>,
+    pub example_input: String,
+    pub example_output: String,
+    pub boilerplate: HashMap<Language, String>,
+    pub default_language: Language,
+    pub date_released: DateTime<Utc>,
+    pub deadline: DateTime<Utc>,
+}

@@ -1,11 +1,11 @@
 use crate::auth::UserInfo;
-use crate::challenge::Challenge;
-use crate::commit::Commit;
+use crate::challenge::DbChallenge;
+use crate::commit::{ReqCommit, ResCommit};
+use chrono::Utc;
 use oauth2::basic::BasicClient;
 use sqlx::error::Error;
-use uuid::Uuid;
-use crate::auth::UserInfo;
 use sqlx::{Pool, Postgres};
+use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -18,10 +18,11 @@ impl AppState {
         AppState { oauth, db }
     }
 
-    pub async fn get_current_challenge(&self) -> Result<Challenge, Error> {
-        let result: Challenge = sqlx::query_as!(
-            Challenge,
-            "SELECT * FROM public.challenges WHERE current=true"
+    pub async fn get_current_challenge(&self) -> Result<DbChallenge, Error> {
+        let result: DbChallenge = sqlx::query_as!(
+            DbChallenge,
+            "SELECT * FROM public.challenges WHERE date_released <= $1 AND deadline >= $1",
+            Utc::now()
         )
         .fetch_one(&self.db)
         .await?;
@@ -29,10 +30,10 @@ impl AppState {
         Ok(result)
     }
 
-    pub async fn get_commit_by_id(&self, commit_id: i32) -> Result<Commit, Error> {
-        let result: Commit = sqlx::query_as!(
-            Commit,
-            "SELECT * FROM public.commits WHERE commit_id = $1",
+    pub async fn get_commit_by_id(&self, commit_id: i32) -> Result<ResCommit, Error> {
+        let result: ResCommit = sqlx::query_as!(
+            ResCommit,
+            "SELECT * FROM public.commits WHERE id = $1",
             commit_id
         )
         .fetch_one(&self.db)
@@ -41,20 +42,26 @@ impl AppState {
         Ok(result)
     }
 
-    pub async fn get_all_commits(&self) -> Result<Vec<Commit>, Error> {
-        let result: Vec<Commit> = sqlx::query_as!(
-            Commit,
-            "SELECT * FROM public.commits"
-        ).fetch_all(&self.db).await?;
+    pub async fn get_all_commits(&self) -> Result<Vec<ResCommit>, Error> {
+        let result: Vec<ResCommit> = sqlx::query_as!(ResCommit, "SELECT * FROM public.commits")
+            .fetch_all(&self.db)
+            .await?;
 
         Ok(result)
+    }
+
+    pub async fn get_challenge(&self, challenge_id: i32) {
+        // sqlx::query_as!(ResChanl)
     }
 
     pub async fn get_user(&self, username: &str) -> Result<UserInfo, Error> {
         let result: UserInfo = sqlx::query_as!(
             UserInfo,
-            "SELECT * FROM public.users WHERE username=$1", username
-        ).fetch_one(&self.db).await?;
+            "SELECT * FROM public.users WHERE username=$1",
+            username
+        )
+        .fetch_one(&self.db)
+        .await?;
 
         Ok(result)
     }
@@ -80,17 +87,18 @@ impl AppState {
         Ok(user)
     }
 
-    pub async fn add_commit(&self, commit: Commit) -> Result<Commit, Error> {
-        let commit_id = commit.commit_id;
-
+    pub async fn add_commit(&self, commit: ResCommit) -> Result<ResCommit, Error> {
         let result = sqlx::query!(
-            "INSERT INTO commits (commit_id, username, date, title, solution, is_valid) VALUES ($1, $2, $3, $4, $5, $6)",
-            commit.commit_id,
-            commit.username,
+            "INSERT INTO commits (commit_hash, user_id, date, title, solution, is_valid, language, description, challenge_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+            commit.commit_hash,
+            commit.user_id,
             commit.date,
             commit.title,
             commit.solution,
-            commit.is_valid.unwrap_or(false),
+            commit.is_valid,
+            commit.language as i32,
+            commit.description,
+            commit.challenge_id
         )
             .execute(&self.db)
             .await?;
@@ -104,23 +112,29 @@ impl AppState {
         //     .await?;
         //
         // Ok(commit.into())
-        self.get_commit_by_id(commit_id).await
+        self.get_commit_by_id(commit.id).await
     }
 
-    pub async fn get_past_challenge_by_id(&self, challenge_id: Uuid) -> Result<Challenge, Error> {
-        let result: Challenge = sqlx::query_as!(
-            Challenge,
-            "SELECT * FROM public.challenges WHERE challenge_id=$1", challenge_id
-        ).fetch_one(&self.db).await?;
+    pub async fn get_past_challenge_by_id(&self, id: i32) -> Result<DbChallenge, Error> {
+        let result: DbChallenge = sqlx::query_as!(
+            DbChallenge,
+            "SELECT * FROM public.challenges WHERE id=$1",
+            id
+        )
+        .fetch_one(&self.db)
+        .await?;
 
         Ok(result)
     }
 
-    pub async fn get_past_challenges(&self) -> Result<Vec<Challenge>, Error> {
+    pub async fn get_past_challenges(&self) -> Result<Vec<DbChallenge>, Error> {
         todo!()
     }
 
-    pub async fn get_past_challenge_commits(&self, challenge_id: Uuid) -> Result<Vec<Challenge>, Error> {
+    pub async fn get_past_challenge_commits(
+        &self,
+        challenge_id: Uuid,
+    ) -> Result<Vec<DbChallenge>, Error> {
         todo!()
     }
 }
