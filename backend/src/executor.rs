@@ -2,16 +2,30 @@ use anyhow::anyhow;
 use governor::{DefaultDirectRateLimiter, Quota, RateLimiter};
 use itertools::Itertools;
 use piston_rs::ExecResponse;
+use serde::{Deserialize, Serialize};
+use sqlx::types::JsonValue;
 use std::fmt::{Display, Formatter, Write};
 use std::num::NonZeroU32;
 use std::sync::OnceLock;
 use std::time::Duration;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, Default, sqlx::Type, Eq, PartialEq, Hash)]
+#[repr(i32)]
 pub enum Language {
-    Rust,
-    Python,
-    TypeScript,
+    #[default]
+    Rust = 0,
+    Python = 1,
+    TypeScript = 2,
+}
+
+impl From<i32> for Language {
+    fn from(value: i32) -> Self {
+        match value {
+            0 => Self::Rust,
+            1 => Self::Python,
+            _ => Self::TypeScript,
+        }
+    }
 }
 
 impl Language {
@@ -32,7 +46,7 @@ impl Language {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum FuncType {
     Array(Box<FuncType>),
     Int(i32),
@@ -79,10 +93,17 @@ impl FuncType {
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Function {
     pub name: String,
     pub inputs: Vec<(String, FuncType)>,
     pub output: FuncType,
+}
+
+impl From<JsonValue> for Function {
+    fn from(value: JsonValue) -> Self {
+        serde_json::from_value(value).unwrap()
+    }
 }
 
 impl Function {

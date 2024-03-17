@@ -1,6 +1,7 @@
-use actix_session::Session;
+use crate::executor::Language;
 use crate::state::AppState;
 use actix_identity::Identity;
+use actix_session::Session;
 use actix_web::http::header;
 use actix_web::web::Redirect;
 use actix_web::{web, HttpMessage, HttpRequest, HttpResponse, Responder, Scope};
@@ -26,6 +27,8 @@ pub struct UserInfo {
     #[serde(rename(deserialize = "login"))]
     pub username: String,
     pub avatar_url: String,
+    #[serde(default)]
+    pub default_language: Language,
 }
 
 async fn read_user(access_token: &AccessToken) -> anyhow::Result<UserInfo> {
