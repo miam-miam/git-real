@@ -1,10 +1,14 @@
 use crate::challenge::ResChallenge;
-use crate::commit::ReqCommit;
+use crate::commit::{ReqCommit, ResCommit};
+use crate::executor;
 use crate::executor::Language;
 use crate::state::AppState;
 use actix_identity::Identity;
 use actix_web::web::{Data, Json, Path};
 use actix_web::{get, post, web, App, HttpResponse, Responder, Scope};
+use chrono::Utc;
+use nom::HexDisplay;
+use rand::RngCore;
 use uuid::Uuid;
 
 pub fn api_routes() -> Scope {
@@ -58,17 +62,46 @@ async fn get_current_challenge(db: Data<AppState>, identity: Identity) -> HttpRe
 }
 
 #[post("/commits")]
-async fn submit_commit(db: Data<AppState>, new_commit: Json<ReqCommit>) -> HttpResponse {
-    // call Alec's API
+async fn submit_commit(
+    db: Data<AppState>,
+    new_commit: Json<ReqCommit>,
+    identity: Identity,
+) -> HttpResponse {
+    let user_id = match identity.id() {
+        Ok(user_id) => user_id.parse().unwrap(),
+        _ => return HttpResponse::NotFound().body("User id not found."),
+    };
+
     let challenge = db.get_current_challenge().await.unwrap();
 
-    let functions = Language::for_all_languages(|l| challenge.function.generate_function(l));
+    let (is_valid, _exec_result) = executor::test_language(
+        new_commit.language,
+        challenge.function,
+        new_commit.solution.as_str(),
+    )
+    .await
+    .unwrap();
 
-    // match db.add_commit(data).await {
-    //     Ok(commit) => HttpResponse::Ok().json(commit),
-    //     Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
-    // }
-    todo!()
+    let mut data = [0u8; 16];
+    rand::thread_rng().fill_bytes(&mut data);
+
+    let res = ResCommit {
+        id: 0,
+        commit_hash: data.as_slice().to_hex(16),
+        user_id,
+        date: Utc::now(),
+        title: new_commit.title.clone(),
+        solution: new_commit.solution.clone(),
+        is_valid,
+        language: new_commit.language,
+        description: new_commit.description.clone(),
+        challenge_id: challenge.id,
+    };
+
+    match db.add_commit(res).await {
+        Ok(commit) => HttpResponse::Ok().json(commit),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+    }
 }
 
 #[get("/commits/{id}")]
