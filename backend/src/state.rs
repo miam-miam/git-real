@@ -89,15 +89,23 @@ impl AppState {
     }
 
     pub async fn get_me_info(&self, user_id: i64) -> anyhow::Result<MeInfo> {
-        let user = sqlx::query_as!(UserInfo, "SELECT * FROM users WHERE id = $1", user_id)
-            .fetch_one(&self.db)
-            .await?;
+        println!("{user_id}");
+        let user =
+            sqlx::query_as::<_, UserInfo>(&format!("SELECT * FROM users WHERE id = {user_id}"))
+                .fetch_one(&self.db)
+                .await?;
+        // let user = sqlx::query_as!(UserInfo, "SELECT * FROM users WHERE id = $1", user_id)
+        //     .fetch_one(&self.db)
+        //     .await?;
+        println!("passing");
         let record = sqlx::query!(
             "SELECT is_valid FROM commits WHERE user_id = $1 AND is_valid = 'true' ORDER by date DESC LIMIT 1",
             user_id
         )
         .fetch_optional(&self.db)
         .await?;
+
+        println!("passing2");
 
         Ok(MeInfo {
             id: user.id,
@@ -202,12 +210,16 @@ impl AppState {
     pub async fn post_reaction(&self, reaction: Reaction) -> Result<ReactionStatus, Error> {
         let result = sqlx::query!(
             "SELECT * FROM user_reactions WHERE user_id=$1 AND commit_id=$2 AND reaction_id=$3",
-            reaction.user_id, reaction.commit_id, reaction.reaction_id
-        ).fetch_optional(&self.db).await;
+            reaction.user_id,
+            reaction.commit_id,
+            reaction.reaction_id
+        )
+        .fetch_optional(&self.db)
+        .await;
 
         let exists = match result {
             Ok(record) => record.is_some(),
-            Err(err) => { return Err(err) }
+            Err(err) => return Err(err),
         };
 
         if !exists && reaction.active {

@@ -20,7 +20,7 @@ pub fn auth_routes() -> Scope {
         .route("/logout", web::post().to(logout))
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, sqlx::FromRow)]
 pub struct UserInfo {
     pub id: i64,
     pub name: Option<String>,

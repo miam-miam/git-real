@@ -1,5 +1,5 @@
-use crate::commit::{Reaction, ReqCommit, ResCommit};
 use crate::challenge::{DbChallenge, ResChallenge};
+use crate::commit::{Reaction, ReqCommit, ResCommit};
 use crate::executor;
 use crate::executor::Language;
 use crate::state::AppState;
@@ -78,7 +78,7 @@ async fn submit_commit(
 
     let challenge = match db.get_current_challenge().await {
         Ok(challenge) => challenge,
-        Err(err) => return HttpResponse::InternalServerError().body(err.to_string())
+        Err(err) => return HttpResponse::InternalServerError().body(err.to_string()),
     };
 
     let (is_valid, _exec_result) = match executor::test_language(
@@ -86,9 +86,10 @@ async fn submit_commit(
         challenge.function,
         new_commit.solution.as_str(),
     )
-    .await {
+    .await
+    {
         Ok(tuple) => tuple,
-        Err(err) => return HttpResponse::InternalServerError().body(err.to_string())
+        Err(err) => return HttpResponse::InternalServerError().body(err.to_string()),
     };
 
     let mut data = [0u8; 16];
@@ -147,7 +148,10 @@ async fn current_user(db: Data<AppState>, identity: Identity) -> HttpResponse {
 
     match db.get_me_info(user_id).await {
         Ok(user) => HttpResponse::Ok().json(user),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+        Err(err) => {
+            eprintln!("{err}");
+            HttpResponse::InternalServerError().body(err.to_string())
+        }
     }
 }
 
@@ -179,7 +183,11 @@ async fn get_past_challenge_commits(db: Data<AppState>, challenge_id: Path<i32>)
 }
 
 #[get("/commits/{id}/reactions")]
-async fn get_commit_reactions(db: Data<AppState>, identity: Identity, challenge_id: Path<i32>) -> HttpResponse {
+async fn get_commit_reactions(
+    db: Data<AppState>,
+    identity: Identity,
+    challenge_id: Path<i32>,
+) -> HttpResponse {
     let user_id: i32 = match identity.id() {
         Ok(user_id) => user_id.parse().unwrap(),
         _ => return HttpResponse::NotFound().body("User id not found."),
@@ -190,7 +198,7 @@ async fn get_commit_reactions(db: Data<AppState>, identity: Identity, challenge_
         .await
     {
         Ok(reactions) => HttpResponse::Ok().json(reactions),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
 
