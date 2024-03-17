@@ -1,11 +1,9 @@
-use std::sync::mpsc::channel;
-use actix_web::{Responder, HttpResponse, Scope, web, get, post, App};
-use actix_web::web::{Data, Json, Path};
-use chrono::{DateTime, Utc};
-use uuid::Uuid;
-use crate::challenge::Challenge;
 use crate::commit::Commit;
 use crate::state::AppState;
+use actix_identity::Identity;
+use actix_web::web::{Data, Json, Path};
+use actix_web::{get, post, web, HttpResponse, Scope};
+use chrono::Utc;
 
 pub fn api_routes() -> Scope {
     web::scope("/api")
@@ -14,6 +12,7 @@ pub fn api_routes() -> Scope {
         .service(submit_commit)
         .service(get_commit_by_id)
         .service(get_user)
+        .service(current_user)
 }
 
 #[get("/")]
@@ -26,13 +25,13 @@ async fn get_current_challenge(db: Data<AppState>) -> HttpResponse {
     let data = db.get_current_challenge().await;
     match data {
         Ok(challenge) => HttpResponse::Ok().json(challenge),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
 
 #[post("/commit")]
 async fn submit_commit(db: Data<AppState>, new_commit: Json<Commit>) -> HttpResponse {
-    let mut data = Commit {
+    let data = Commit {
         id: 0,
         commit_id: 0, // TODO change
         username: new_commit.username.to_owned(),
@@ -55,7 +54,20 @@ async fn submit_commit(db: Data<AppState>, new_commit: Json<Commit>) -> HttpResp
 async fn get_commit_by_id(db: Data<AppState>, commit_id: Path<i32>) -> HttpResponse {
     match db.get_commit_by_id(commit_id.into_inner()).await {
         Ok(commit) => HttpResponse::Ok().json(commit),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+    }
+}
+
+#[get("/me")]
+async fn current_user(db: Data<AppState>, identity: Identity) -> HttpResponse {
+    let user_id = match identity.id() {
+        Ok(user_id) => user_id.parse().unwrap(),
+        _ => return HttpResponse::NotFound().body("User id not found."),
+    };
+
+    match db.get_user(user_id).await {
+        Ok(user) => HttpResponse::Ok().json(user),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
 
@@ -68,7 +80,3 @@ async fn get_user(db: Data<AppState>, user_id: Path<i32>) -> HttpResponse {
 async fn get_solutions(db: Data<AppState>) -> HttpResponse {
     todo!()
 }
-
-
-
-
