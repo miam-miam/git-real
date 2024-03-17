@@ -60,7 +60,7 @@ export default function StartPage() {
 
 
 
-    const lockedPosts = posts.map((post) => ({ ...post, locked: false }));
+    const lockedPosts = posts.map((post) => ({ ...post, locked: true }));
 
     const allPosts = lockedPosts.map((post, index) => {
         return (

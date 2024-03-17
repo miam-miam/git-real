@@ -21,13 +21,22 @@ export const Post = ({ props }: { props: IPost }) => {
 
     return (
         <div className="min-w-[1000px] flex flex-col mb-24">
+            {/*<div className={"flex justify-center bg-amber-500"}>*/}
+            {/*    <div className="z-[8237498237487236478] absolute grid mt-32 content-center">*/}
+            {/*        <div className={"w-96"}>*/}
+            {/*            <p>Commit your challenge to view</p>*/}
+
+            {/*        </div>*/}
+            {/*    </div>*/}
+            {/*</div>*/}
+
             <div className="flex flex-row items-center mb-5">
                 <Image src={props.profile_picture} className="w-10 h-10 rounded-full mr-3"
                        alt={`${props.username} profile picture`} width={400} height={400}/>
                 <Link
                     href={`https://github.com/${props.username}`}
                 >
-                    <h2 className="text-xl font-bold">@{props.username}</h2>
+                <h2 className="text-xl font-bold">@{props.username}</h2>
                 </Link>
             </div>
 
@@ -37,7 +46,8 @@ export const Post = ({ props }: { props: IPost }) => {
             </div>
 
             <div className={`${blur}`}>
-                <CodeEditorWindow boilerPlate={props.code} language={props.language} onChange={() => {}} fixedHeight={true} readOnly={true}/>
+                <CodeEditorWindow boilerPlate={props.code} language={props.language} onChange={() => {
+                }} fixedHeight={true} readOnly={true}/>
             </div>
 
         </div>
