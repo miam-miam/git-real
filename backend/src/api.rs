@@ -5,11 +5,11 @@ use crate::executor::Language;
 use crate::state::AppState;
 use actix_identity::Identity;
 use actix_web::web::{Data, Json, Path};
-use actix_web::{get, post, web, App, HttpResponse, Responder, Scope};
+use actix_web::{get, post, web, HttpResponse, Scope};
 use chrono::Utc;
 use nom::HexDisplay;
 use rand::RngCore;
-use uuid::Uuid;
+use sqlx::Error;
 
 pub fn api_routes() -> Scope {
     web::scope("/api")
@@ -17,7 +17,6 @@ pub fn api_routes() -> Scope {
         .service(get_current_challenge)
         .service(submit_commit)
         .service(get_commit_by_id)
-        .service(get_all_commits)
         .service(get_user)
         .service(current_user)
 }
@@ -57,6 +56,7 @@ async fn get_current_challenge(db: Data<AppState>, identity: Identity) -> HttpRe
             };
             HttpResponse::Ok().json(res)
         }
+        Err(Error::RowNotFound) => HttpResponse::NoContent().finish(),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
@@ -125,14 +125,6 @@ async fn current_user(db: Data<AppState>, identity: Identity) -> HttpResponse {
     }
 }
 
-#[get("/commits")]
-async fn get_all_commits(db: Data<AppState>) -> HttpResponse {
-    match db.get_all_commits().await {
-        Ok(commits) => HttpResponse::Ok().json(commits),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
-    }
-}
-
 #[get("/challenges")]
 async fn get_challenges(db: Data<AppState>) -> HttpResponse {
     match db.get_past_challenges().await {
@@ -150,7 +142,7 @@ async fn get_past_challenge(db: Data<AppState>, challenge_id: Path<i32>) -> Http
 }
 
 #[get("/challenges/{id}/commits")]
-async fn get_past_challenge_commits(db: Data<AppState>, challenge_id: Path<Uuid>) -> HttpResponse {
+async fn get_past_challenge_commits(db: Data<AppState>, challenge_id: Path<i32>) -> HttpResponse {
     match db
         .get_past_challenge_commits(challenge_id.into_inner())
         .await
