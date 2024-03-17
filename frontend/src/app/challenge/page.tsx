@@ -25,7 +25,7 @@ export interface ICommit {
 }
 
 export default function Challenge() {
-    
+
     const [data, setData] = useState<IChallenge>()
     const [code, setCode] = useState("");
     const [isLoading, setLoading] = useState(false)
@@ -147,7 +147,7 @@ export default function Challenge() {
                             {
                                 feedback?.is_valid ? (
                                     <span
-                                        className="m-1 inline-flex justify-center items-center size-[46px] rounded-full bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-400">
+                                        className="m-1 inline-flex justify-center items-center size-[46px] rounded-full  bg-teal-900 text-teal-400">
                   <Image
                       src="/tick.svg"
                       alt="Vercel Logo"
@@ -159,7 +159,7 @@ export default function Challenge() {
 </span>
                                 ) : (
                                     <span
-                                        className="m-1 inline-flex justify-center items-center size-[46px] rounded-full bg-yellow-100 text-red-800 dark:bg-red-900 dark:text-red-500">
+                                        className="m-1 inline-flex justify-center items-center size-[46px] rounded-full  bg-red-900 text-red-500">
                   <Image
                       src="/cross.svg"
                       alt="Vercel Logo"

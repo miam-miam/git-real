@@ -57,7 +57,7 @@ export default async function RootLayout({
     return (
         <html lang="en">
         <body className={inter.className}>
-        <main className="flex min-h-screen flex-col items-center justify-between p-24">
+        <main className="flex min-h-screen flex-col items-center justify-between p-24 bg-black">
             <div className="max-w-7xl w-full items-center justify-between flex">
                 <Link href={'/start'}>
                     <Image
