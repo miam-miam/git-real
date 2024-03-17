@@ -18,7 +18,7 @@ export const Countdown = ({ textSize, timeLeft }: { textSize: string, timeLeft: 
     }, [counter]);
 
     const minutes = Math.floor(counter / 60);
-    const seconds = counter % 60;
+    const seconds = Math.floor(counter % 60);
 
     if (counter <= 0) {
         return <h3 className={`${textSize} font-mono`}>00:00</h3>
