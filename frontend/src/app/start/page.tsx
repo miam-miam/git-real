@@ -6,7 +6,7 @@ import en from 'javascript-time-ago/locale/en'
 import {Countdown} from "@/app/components/Countdown";
 import {fetchChallenge} from "@/app/utilities/fetchChallenge";
 
-
+TimeAgo.addDefaultLocale(en)
 
 
 export default async function StartPage() {
@@ -25,7 +25,7 @@ export default async function StartPage() {
 
     const happeningNow = lastGitRealStartTime < now && now < lastGitRealEndTime;
 
-    TimeAgo.addDefaultLocale(en)
+
     const timeAgo = new TimeAgo('en-UK')
 
     if (happeningNow) {

@@ -10,39 +10,25 @@ import {fetchChallenge, IChallenge} from "@/app/utilities/fetchChallenge";
 import {useRouter} from "next/navigation";
 
 
-const data = {
-    title: "Two Sum",
-    description: "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\n" +
-        "\n" +
-        "You may assume that each input would have exactly one solution, and you may not use the same element twice.\n" +
-        "\n" +
-        "You can return the answer in any order.\n",
-    example_input: "nums = [2,7,11,15], target = 9",
-    example_output: "[0,1]",
-    lang_boilerplate: {
-        python: "def twoSum(self, nums: List[int], target: int) -> List[int]:\n    pass",
-        typescript: "var twoSum = function(nums, target) {\n    \n};",
-        rust: "fn two_sum(nums: Vec<i32>, target: i32) -> Vec<i32> {\n    \n}",
-    },
-    default_lang: "typescript"
+export interface ICommit {
+    id: number;
+    is_valid: boolean;
+    message: string;
+    commit_hash: string;
+    user_id: number;
+    date: string
+    title: string
+    solution: string
+    language: string
+    description: string
+    challenge_id: number
+    avatar_url: string
+    name: string;
+    username: string;
 }
 
 export default function Challenge() {
-
-    interface ICommit {
-        id: number;
-        is_valid: boolean;
-        message: string;
-        commit_hash: string;
-        user_id: number;
-        date: string
-        title: string
-        solution: string
-        language: string
-        description: string
-        challenge_id: number
-    }
-
+    
     const [data, setData] = useState<IChallenge>()
     const [code, setCode] = useState("");
     const [isLoading, setLoading] = useState(false)
