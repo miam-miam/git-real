@@ -72,13 +72,13 @@ export default async function RootLayout({
                 <div className={'flex flex-row'}>
                     <div className={'grid place-content-center'}>
                         <Link href={'/start'}>
-                            <h1 className="text-xl mr-20">Daily Challenge</h1>
+                            <h1 className="text-xl mr-20 text-white">Daily Challenge</h1>
                         </Link>
                     </div>
 
                     <div className={'grid place-content-center'}>
                         <Link href={'/explore'}>
-                            <h1 className="text-xl mr-20">Explore</h1>
+                            <h1 className="text-xl mr-20 text-white">Explore</h1>
                         </Link>
                     </div>
                     <div className={'grid place-content-center'}>
