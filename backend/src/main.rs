@@ -17,23 +17,31 @@ use auth::auth_routes;
 use dotenv::dotenv;
 use oauth2::basic::BasicClient;
 use oauth2::{AuthUrl, ClientId, ClientSecret, TokenUrl};
+use shuttle_secrets::SecretStore;
 use sqlx::postgres::PgPoolOptions;
 use state::AppState;
 use std::env;
 
 #[shuttle_runtime::main]
 async fn main(
+    #[shuttle_secrets::Secrets] secret_store: SecretStore,
 ) -> shuttle_actix_web::ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
     dotenv().ok();
-    let database_url = env!("DATABASE_URL");
+    let database_url = secret_store.get("DATABASE_URL").unwrap();
     let pool = PgPoolOptions::new()
         .max_connections(12)
         .connect(&database_url)
         .await
         .expect("Error building a connection pool");
-    let github_client_id = env!("GITHUB_CLIENT_ID");
-    let github_client_secret = env!("GITHUB_CLIENT_SECRET");
-    let secret_key_hex = env!("SECRET_KEY");
+    if let Some(e) = secret_store.get("FRONTEND_REDIRECT_URL") {
+        env::set_var("FRONTEND_REDIRECT_URL", e);
+    }
+    if let Some(e) = secret_store.get("DATABASE_URL") {
+        env::set_var("DATABASE_URL", e);
+    }
+    let github_client_id = secret_store.get("GITHUB_CLIENT_ID").unwrap();
+    let github_client_secret = secret_store.get("GITHUB_CLIENT_SECRET").unwrap();
+    let secret_key_hex = secret_store.get("SECRET_KEY").unwrap();
     let secret_key = Key::from(
         &hex::decode(secret_key_hex).expect("SECRET_KEY must be a hex-encoded byte array"),
     );
@@ -79,10 +87,11 @@ mod test {
 
     #[tokio::test]
     pub async fn add_challenge() {
-        let database_url = env!("DATABASE_URL");
+        dotenv::dotenv().ok();
+        let database_url = std::env::var("DATABASE_URL").unwrap();
         let pool = PgPoolOptions::new()
             .max_connections(12)
-            .connect(database_url)
+            .connect(&database_url)
             .await
             .expect("Error building a connection pool");
 
