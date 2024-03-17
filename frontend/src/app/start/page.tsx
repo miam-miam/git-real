@@ -12,8 +12,6 @@ export default function StartPage() {
     TimeAgo.addDefaultLocale(en)
     const timeAgo = new TimeAgo('en-UK')
 
-    timeAgo.format(lastGitRealTime)
-
     if (happeningNow) {
 
         return (
@@ -23,10 +21,10 @@ export default function StartPage() {
                         It's GitReal time!
                     </h1>
                     <h3 className="text-2xl font-bold mb-10 text-center">
-                        <Countdown timeLeft={300}/>
+                        <Countdown textSize={"text-6xl"}/>
                     </h3>
                     <div className='grid place-items-center'>
-                        <Link href={'editor'}>
+                        <Link href={'challenge'}>
                             <button type="button"
                                     className="py-3 px-4 inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-gray-200 text-gray-100 hover:bg-white hover:text-gray-950">
                                 Accept Challenge

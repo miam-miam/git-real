@@ -2,7 +2,10 @@
 
 import {useEffect, useState} from "react";
 
-export const Countdown = ({ timeLeft }: { timeLeft: number }) => {
+export const Countdown = ({ textSize }: { textSize: string }) => {
+
+    const timeLeft = 300;
+
     const [counter, setCounter] = useState(timeLeft);
 
     useEffect(() => {
@@ -20,8 +23,8 @@ export const Countdown = ({ timeLeft }: { timeLeft: number }) => {
     const seconds = counter % 60;
 
     if (counter <= 0) {
-        return <h3 className='text-4xl'>00:00</h3>
+        return <h3 className={`${textSize} font-mono`}>00:00</h3>
     }
 
-    return <h3 className='text-4xl'>{String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}</h3>
+    return <h3 className={`${textSize} font-bold font-mono`}>{String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}</h3>
 }
