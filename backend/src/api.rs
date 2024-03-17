@@ -61,7 +61,6 @@ async fn get_current_challenge(db: Data<AppState>, identity: Identity) -> HttpRe
             };
             HttpResponse::Ok().json(res)
         }
-        Err(Error::RowNotFound) => HttpResponse::NoContent().finish(),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
