@@ -1,4 +1,4 @@
-use crate::auth::UserInfo;
+use crate::auth::{MeInfo, UserInfo};
 use crate::challenge::DbChallenge;
 use crate::commit::{ReactionTuple, ReactionStatus, ReqCommit, ResCommit, Reaction};
 use chrono::Utc;
@@ -42,25 +42,22 @@ impl AppState {
         Ok(result)
     }
 
-    pub async fn get_all_commits(&self) -> Result<Vec<ResCommit>, Error> {
-        let result: Vec<ResCommit> = sqlx::query_as!(ResCommit, "SELECT * FROM public.commits")
-            .fetch_all(&self.db)
-            .await?;
+    pub async fn get_user(&self, user_id: i64) -> Result<UserInfo, Error> {
+        let result: UserInfo =
+            sqlx::query_as!(UserInfo, "SELECT * FROM public.users WHERE id=$1", user_id)
+                .fetch_one(&self.db)
+                .await?;
 
         Ok(result)
     }
 
-    pub async fn get_challenge(&self, challenge_id: i32) {
-        // sqlx::query_as!(ResChanl)
-    }
-
-    pub async fn get_user(&self, username: &str) -> Result<UserInfo, Error> {
-        let result: UserInfo = sqlx::query_as!(
-            UserInfo,
-            "SELECT * FROM public.users WHERE username=$1",
-            username
+    pub async fn get_commit_by_user_id(&self, user_id: i64) -> Result<Vec<ResCommit>, Error> {
+        let result = sqlx::query_as!(
+            ResCommit,
+            "SELECT * FROM public.commits WHERE user_id=$1 AND is_valid='true'",
+            user_id
         )
-        .fetch_one(&self.db)
+        .fetch_all(&self.db)
         .await?;
 
         Ok(result)
@@ -87,9 +84,30 @@ impl AppState {
         Ok(user)
     }
 
+    pub async fn get_me_info(&self, user_id: i64) -> anyhow::Result<MeInfo> {
+        let user = sqlx::query_as!(UserInfo, "SELECT * FROM users WHERE id = $1", user_id)
+            .fetch_one(&self.db)
+            .await?;
+        let record = sqlx::query!(
+            "SELECT is_valid FROM commits WHERE user_id = $1 AND is_valid = 'true' ORDER by date DESC LIMIT 1",
+            user_id
+        )
+        .fetch_optional(&self.db)
+        .await?;
+
+        Ok(MeInfo {
+            id: user.id,
+            name: user.name,
+            username: user.username,
+            avatar_url: user.avatar_url,
+            default_language: user.default_language,
+            completed_correctly: record.is_some(),
+        })
+    }
+
     pub async fn add_commit(&self, commit: ResCommit) -> Result<ResCommit, Error> {
         let result = sqlx::query!(
-            "INSERT INTO commits (commit_hash, user_id, date, title, solution, is_valid, language, description, challenge_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+            "INSERT INTO commits (commit_hash, user_id, date, title, solution, is_valid, language, description, challenge_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id",
             commit.commit_hash,
             commit.user_id,
             commit.date,
@@ -100,19 +118,10 @@ impl AppState {
             commit.description,
             commit.challenge_id
         )
-            .execute(&self.db)
+            .fetch_one(&self.db)
             .await?;
 
-        // let commit = sqlx::query_as!(
-        //     Commit,
-        //     "SELECT * FROM commits WHERE commit_id=?",
-        //     commit_id
-        // )
-        //     .fetch_one(&self.db)
-        //     .await?;
-        //
-        // Ok(commit.into())
-        self.get_commit_by_id(commit.id).await
+        self.get_commit_by_id(result.id).await
     }
 
     pub async fn get_challenge_by_id(&self, id: i32) -> Result<DbChallenge, Error> {
@@ -127,15 +136,28 @@ impl AppState {
         Ok(result)
     }
 
-    pub async fn get_challenges(&self) -> Result<Vec<DbChallenge>, Error> {
-        todo!()
+    pub async fn get_past_challenges(&self) -> Result<Vec<DbChallenge>, Error> {
+        let result = sqlx::query_as!(
+            DbChallenge,
+            "SELECT * FROM public.challenges ORDER BY deadline DESC LIMIT 10"
+        )
+        .fetch_all(&self.db)
+        .await?;
+        Ok(result)
     }
 
     pub async fn get_past_challenge_commits(
         &self,
-        challenge_id: Uuid,
-    ) -> Result<Vec<DbChallenge>, Error> {
-        todo!()
+        challenge_id: i32,
+    ) -> Result<Vec<ResCommit>, Error> {
+        let result = sqlx::query_as!(
+            ResCommit,
+            "SELECT * FROM public.commits WHERE challenge_id = $1 AND is_valid = 'true' ORDER BY date DESC",
+            challenge_id
+        )
+        .fetch_all(&self.db)
+        .await?;
+        Ok(result)
     }
 
 

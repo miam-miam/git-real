@@ -6,6 +6,7 @@ mod executor;
 mod state;
 
 use crate::api::api_routes;
+use actix_cors::Cors;
 use actix_identity::IdentityMiddleware;
 use actix_session::storage::CookieSessionStore;
 use actix_session::SessionMiddleware;
@@ -43,7 +44,15 @@ async fn main() -> std::io::Result<()> {
     let app_state = web::Data::new(AppState::new(client, pool));
 
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allowed_origin("localhost:3000")
+            .allow_any_method()
+            .supports_credentials()
+            .allow_any_header()
+            .expose_any_header()
+            .max_age(3600);
         App::new()
+            .wrap(cors)
             .wrap(IdentityMiddleware::default())
             .wrap(SessionMiddleware::new(
                 CookieSessionStore::default(),
