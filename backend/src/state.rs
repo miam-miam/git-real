@@ -190,10 +190,15 @@ impl AppState {
     }
 
     pub async fn post_reaction(&self, reaction: Reaction) -> Result<ReactionStatus, Error> {
-        let exists: bool = sqlx::query!(
+        let result = sqlx::query!(
             "SELECT * FROM user_reactions WHERE user_id=$1 AND commit_id=$2 AND reaction_id=$3",
             reaction.user_id, reaction.commit_id, reaction.reaction_id
-        ).fetch_one(&self.db).await.is_ok();
+        ).fetch_optional(&self.db).await;
+
+        let exists = match result {
+            Ok(record) => record.is_some(),
+            Err(err) => { return Err(err) }
+        };
 
         if !exists && reaction.active {
             sqlx::query!(
