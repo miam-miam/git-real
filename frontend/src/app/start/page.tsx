@@ -4,18 +4,31 @@ import Link from "next/link";
 import TimeAgo from 'javascript-time-ago'
 import en from 'javascript-time-ago/locale/en'
 import {Countdown} from "@/app/components/Countdown";
-import {fetchChallenge} from "@/app/utilities/fetchChallenge";
+import {fetchChallenge, IChallenge} from "@/app/utilities/fetchChallenge";
+import {useEffect, useState} from "react";
 
 TimeAgo.addDefaultLocale(en)
 
 
-export default async function StartPage() {
+export default function StartPage() {
 
-    const data = await fetchChallenge()
+
+    const [data, setData] = useState<IChallenge | null>()
+
+    useEffect(() => {
+        const timerId = setInterval(async () => {
+            const newData = await fetchChallenge()
+            setData(newData);
+        }, 2000)
+        return () => {
+            clearInterval(timerId);
+        };
+    }, []);
+
 
     if (!data) {
         console.log("no challenge data on start")
-        return null;
+        return <div>Loading...</div>;
     }
 
 
