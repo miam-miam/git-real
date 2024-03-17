@@ -1,19 +1,23 @@
 mod auth;
 mod state;
 mod executor;
+mod api;
+mod challenge;
+mod commit;
 
 use actix_web::{web, App, HttpServer};
 use auth::auth_routes;
 use dotenv::dotenv;
 use hex;
-use sqlx::{postgres::PgPoolOptions};
+use sqlx::{Error, Executor, Pool, Postgres, postgres::PgPoolOptions};
 use state::AppState;
 use std::env;
 use actix_session::SessionMiddleware;
 use actix_session::storage::CookieSessionStore;
 use actix_web::cookie::Key;
 use oauth2::basic::BasicClient;
-use oauth2::{ClientId, ClientSecret, AuthUrl, TokenUrl};
+use oauth2::{ClientId, ClientSecret, AuthUrl, TokenUrl, Client};
+use crate::api::api_routes;
 
 
 #[actix_web::main]
@@ -46,11 +50,9 @@ async fn main() -> std::io::Result<()> {
             )
             .app_data(app_state.clone())
             .service(auth_routes())
-            .service(
-                web::scope("/api")
-            )
+            .service(api_routes())
     })
-    .bind("0.0.0.0:3000")?
+    .bind("localhost:3000")?
     .run()
     .await
 }
