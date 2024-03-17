@@ -54,6 +54,18 @@ impl AppState {
         Ok(result)
     }
 
+    pub async fn get_commit_by_user_id(&self, user_id: i64) -> Result<Vec<ResCommit>, Error> {
+        let result = sqlx::query_as!(
+            ResCommit,
+            "SELECT * FROM public.commits WHERE user_id=$1 AND is_valid='true'",
+            user_id
+        )
+        .fetch_all(&self.db)
+        .await?;
+
+        Ok(result)
+    }
+
     pub async fn add_or_update_user(&self, user: &UserInfo) -> anyhow::Result<bool> {
         let res = sqlx::query!(
             "INSERT INTO users (id, name, username, avatar_url) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING",
@@ -113,7 +125,6 @@ impl AppState {
             .await?;
 
         self.get_commit_by_id(result.id).await
-
     }
 
     pub async fn get_past_challenge_by_id(&self, id: i32) -> Result<DbChallenge, Error> {

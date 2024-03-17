@@ -19,6 +19,7 @@ pub fn api_routes() -> Scope {
         .service(get_commit_by_id)
         .service(get_user)
         .service(current_user)
+        .service(get_user_commits)
 }
 
 #[get("/")]
@@ -155,6 +156,14 @@ async fn get_past_challenge_commits(db: Data<AppState>, challenge_id: Path<i32>)
 #[get("/user/{id}")]
 async fn get_user(db: Data<AppState>, username: Path<String>) -> HttpResponse {
     match db.get_user(&username.into_inner()).await {
+        Ok(user) => HttpResponse::Ok().json(user),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+    }
+}
+
+#[get("/user/{id}/commits")]
+async fn get_user_commits(db: Data<AppState>, username: Path<i64>) -> HttpResponse {
+    match db.get_commit_by_user_id(username.into_inner()).await {
         Ok(user) => HttpResponse::Ok().json(user),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
