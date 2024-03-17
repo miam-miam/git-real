@@ -42,18 +42,6 @@ impl AppState {
         Ok(result)
     }
 
-    pub async fn get_all_commits(&self) -> Result<Vec<ResCommit>, Error> {
-        let result: Vec<ResCommit> = sqlx::query_as!(ResCommit, "SELECT * FROM public.commits")
-            .fetch_all(&self.db)
-            .await?;
-
-        Ok(result)
-    }
-
-    pub async fn get_challenge(&self, challenge_id: i32) {
-        // sqlx::query_as!(ResChanl)
-    }
-
     pub async fn get_user(&self, username: &str) -> Result<UserInfo, Error> {
         let result: UserInfo = sqlx::query_as!(
             UserInfo,
@@ -103,15 +91,6 @@ impl AppState {
             .execute(&self.db)
             .await?;
 
-        // let commit = sqlx::query_as!(
-        //     Commit,
-        //     "SELECT * FROM commits WHERE commit_id=?",
-        //     commit_id
-        // )
-        //     .fetch_one(&self.db)
-        //     .await?;
-        //
-        // Ok(commit.into())
         self.get_commit_by_id(commit.id).await
     }
 
@@ -128,13 +107,26 @@ impl AppState {
     }
 
     pub async fn get_past_challenges(&self) -> Result<Vec<DbChallenge>, Error> {
-        todo!()
+        let result = sqlx::query_as!(
+            DbChallenge,
+            "SELECT * FROM public.challenges ORDER BY deadline DESC LIMIT 10"
+        )
+        .fetch_all(&self.db)
+        .await?;
+        Ok(result)
     }
 
     pub async fn get_past_challenge_commits(
         &self,
-        challenge_id: Uuid,
-    ) -> Result<Vec<DbChallenge>, Error> {
-        todo!()
+        challenge_id: i32,
+    ) -> Result<Vec<ResCommit>, Error> {
+        let result = sqlx::query_as!(
+            ResCommit,
+            "SELECT * FROM public.commits WHERE challenge_id = $1 ORDER BY date DESC",
+            challenge_id
+        )
+        .fetch_all(&self.db)
+        .await?;
+        Ok(result)
     }
 }
