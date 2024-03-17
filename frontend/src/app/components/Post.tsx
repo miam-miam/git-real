@@ -10,6 +10,7 @@ import {useEffect, useState} from "react";
 export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
 
     const [data, setData] = useState<{ username: string, avatar_url: string }>()
+    const [selectEmojiOpen, setSelectEmojiOpen] = useState(false)
 
     useEffect(() => {
         fetch(`http://localhost:3001/api/user/${props.user_id}`, {
@@ -28,7 +29,7 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
         return <div>Loading...</div>;
     }
 
-    const [selectEmojiOpen, setSelectEmojiOpen] = useState(false)
+
 
     const blur = locked ? 'blur select-none' : ''
 
