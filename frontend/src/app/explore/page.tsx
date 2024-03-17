@@ -14,6 +14,9 @@ import {IProfile} from "@/app/components/Profile";
 export default function StartPage() {
 
 
+
+
+
     const [userData, setUserData] = useState<IProfile>()
     const [postData, setPostData] = useState<ICommit[]>()
 
@@ -37,10 +40,34 @@ export default function StartPage() {
 
 
     if (postData === undefined || userData === undefined) {
-        return null;
+        return <div>Loading...</div>;
     }
 
-    const lockedPosts = postData.map((post) => ({...post, locked: !userData.done_recent}));
+    const lockedPosts = postData.map((post) => ({...post, locked: !userData.completed_correctly,
+        reactions: {
+                heart: 2,
+                rocket: 0,
+                thumbsup: 0,
+                thumbsdown: 0,
+                skull: 0,
+                trash: 0,
+                tada: 0,
+                facepalm: 0,
+                nerd: 29,
+            },
+            user_reactions: {
+                heart: true,
+                rocket: false,
+                thumbsup: false,
+                thumbsdown: false,
+                skull: false,
+                trash: false,
+                tada: false,
+                facepalm: false,
+                nerd: false,
+            }
+
+    }));
 
     const allPosts = lockedPosts.map((post, index) => {
         return (
