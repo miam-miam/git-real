@@ -20,6 +20,7 @@ pub fn api_routes() -> Scope {
         .service(get_user)
         .service(current_user)
         .service(get_user_commits)
+        .service(get_commits)
 }
 
 #[get("/")]
@@ -101,6 +102,20 @@ async fn submit_commit(
 
     match db.add_commit(res).await {
         Ok(commit) => HttpResponse::Ok().json(commit),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+    }
+}
+
+#[get("/commits")]
+async fn get_commits(db: Data<AppState>, identity: Identity) -> HttpResponse {
+    if identity.id().is_err() {
+        return HttpResponse::NotFound().body("User id not found.");
+    };
+
+    let challenge = db.get_current_challenge().await.unwrap();
+
+    match db.get_past_challenge_commits(challenge.id).await {
+        Ok(commits) => HttpResponse::Ok().json(commits),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }

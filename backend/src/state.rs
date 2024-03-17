@@ -155,7 +155,7 @@ impl AppState {
     ) -> Result<Vec<ResCommit>, Error> {
         let result = sqlx::query_as!(
             ResCommit,
-            "SELECT * FROM public.commits WHERE challenge_id = $1 ORDER BY date DESC",
+            "SELECT * FROM public.commits WHERE challenge_id = $1 AND is_valid = 'true' ORDER BY date DESC",
             challenge_id
         )
         .fetch_all(&self.db)
