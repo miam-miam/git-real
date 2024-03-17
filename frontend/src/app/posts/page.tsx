@@ -66,8 +66,8 @@ export default function StartPage() {
 
 
     return (
-        <div className="w-1/2 relative flex place-items-center">
-            <div className="w-1/2 flex flex-col">
+        <div className="relative flex place-items-center mt-20">
+            <div className="flex flex-col">
                 {allPosts}
             </div>
         </div>

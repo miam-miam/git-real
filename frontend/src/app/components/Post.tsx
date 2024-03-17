@@ -17,7 +17,7 @@ interface IPost {
 
 export const Post = ({ props }: { props: IPost }) => {
     return (
-        <div className="flex flex-col mb-24">
+        <div className="min-w-[1000px] flex flex-col mb-24">
             <div className="flex flex-row items-center mb-5">
                 <Image src={props.profile_picture} className="w-10 h-10 rounded-full mr-3"
                        alt={`${props.username} profile picture`} width={400} height={400}/>
