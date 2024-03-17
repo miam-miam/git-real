@@ -6,7 +6,7 @@ import Editor, {useMonaco} from "@monaco-editor/react";
 import {monacoTheme} from "@/app/components/MonacoTheme";
 
 export const CodeEditorWindow = ({onChange, language, boilerPlate}: {
-    onChange: (a: string, b: string) => any,
+    onChange: (code: string) => void,
     language: string,
     boilerPlate: string
 }) => {
@@ -43,7 +43,7 @@ export const CodeEditorWindow = ({onChange, language, boilerPlate}: {
 
     const handleEditorChange = (value: string | undefined) => {
         setValue(value || "");
-        onChange("code", value || "");
+        onChange(value || "");
     };
 
     return (
