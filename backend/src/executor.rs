@@ -151,7 +151,7 @@ impl Function {
                     .fold(String::new(), |mut acc, (i, (_n, t))| {
                         let _ = writeln!(
                             acc,
-                            "const value{i} = {}(process.argv[{}])",
+                            "// @ts-ignore\nconst value{i} = {}(process.argv[{}])",
                             t.type_init(language),
                             i + 2
                         );
@@ -276,6 +276,57 @@ mod test {
         .await
         .unwrap();
         println!("{res:?}")
+    }
+
+    #[tokio::test]
+    pub async fn test_all_languages() {
+        let res = test_language(
+            Language::Rust,
+            Function {
+                name: "add".to_string(),
+                inputs: vec![
+                    ("left".to_string(), FuncType::Int(43)),
+                    ("right".to_string(), FuncType::Int(21)),
+                ],
+                output: FuncType::Int(64),
+            },
+            "pub fn add(left: i32, right: i32) -> i32 {left + right}",
+        )
+        .await
+        .unwrap();
+        println!("{res:?}");
+
+        let res = test_language(
+            Language::Python,
+            Function {
+                name: "add".to_string(),
+                inputs: vec![
+                    ("left".to_string(), FuncType::Int(43)),
+                    ("right".to_string(), FuncType::Int(21)),
+                ],
+                output: FuncType::Int(64),
+            },
+            "def add(left: int, right: int) -> int:\n    return left + right",
+        )
+        .await
+        .unwrap();
+        println!("{res:?}");
+
+        let res = test_language(
+            Language::TypeScript,
+            Function {
+                name: "add".to_string(),
+                inputs: vec![
+                    ("left".to_string(), FuncType::Int(43)),
+                    ("right".to_string(), FuncType::Int(21)),
+                ],
+                output: FuncType::Int(64),
+            },
+            "const add = function(left: number, right: number): number \n{return left + right;}",
+        )
+        .await
+        .unwrap();
+        println!("{res:?}");
     }
 
     #[tokio::test]
