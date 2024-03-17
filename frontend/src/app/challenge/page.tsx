@@ -45,17 +45,34 @@ export default function Challenge() {
         setCode(data);
     };
 
-    const submit = (e: FormEvent<HTMLFormElement>) => {
+    const submit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         const formData = new FormData(e.currentTarget)
 
-        const fdata = Object.fromEntries(formData);
+        const submitData = Object.fromEntries(formData);
 
-        fdata.code = code;
-        fdata.language = data.default_language;
+        const res = await fetch('http://localhost:3001/api/commits', {
+            method: 'POST',
+            credentials: "include",
+            body: JSON.stringify({
+                title: submitData.commit_message,
+                description: submitData.commit_description,
+                solution: code,
+                language: data.default_language
+            }),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
 
-        console.log(fdata) // TODO post to the api
+        if (!res.ok) {
+            console.error("res commit", res.status, res.statusText)
+        }
+
+        if (res.ok) {
+            console.log("commit success")
+        }
 
     }
 
@@ -126,7 +143,8 @@ export default function Challenge() {
                                        className=" mr-5 py-3 px-4 block w-full bg-gray-800 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500"
                                        placeholder="Commit message"/>
                                 <button type="submit"
-                                        className="w-64 text-center py-3 px-4 inline-flex gap-x-2 text-sm font-semibold rounded-lg bg-blue-100 text-blue-800 hover:bg-blue-200">
+                                        disabled={code.length === 0}
+                                        className="w-64 text-center py-3 px-4 inline-flex gap-x-2 text-sm font-semibold rounded-lg bg-blue-100 text-blue-800 hover:bg-blue-200 disabled:bg-blue-900">
                                     Commit
                                 </button>
                             </div>
