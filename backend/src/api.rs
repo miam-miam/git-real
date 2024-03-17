@@ -152,13 +152,13 @@ async fn current_user(db: Data<AppState>, identity: Identity) -> HttpResponse {
     }
 }
 
-#[get("/challenges")]
-async fn get_challenges(db: Data<AppState>) -> HttpResponse {
-    match db.get_challenges().await {
-        Ok(challenges) => HttpResponse::Ok().json(challenges),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
-    }
-}
+// #[get("/challenges")]
+// async fn get_challenges(db: Data<AppState>) -> HttpResponse {
+//     match db.get_challenges().await {
+//         Ok(challenges) => HttpResponse::Ok().json(challenges),
+//         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+//     }
+// }
 
 #[get("/challenges/{id}")]
 async fn get_past_challenge(db: Data<AppState>, challenge_id: Path<i32>) -> HttpResponse {
