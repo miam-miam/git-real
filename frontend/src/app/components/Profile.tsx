@@ -36,12 +36,12 @@ export const Profile = () => {
     }, [])
 
 
-    if (!data) {
+    if (!data?.avatar_url) {
         console.log("no data for profile")
-        return null
+        return <SignIn/>
     }
 
-    return data.avatar_url ? (
+    return  (
         <Link href={'/account'}>
             <Image
                 src={data.avatar_url}
@@ -52,7 +52,5 @@ export const Profile = () => {
                 priority
             />
         </Link>
-    ) : (
-        <SignIn/>
     )
 }

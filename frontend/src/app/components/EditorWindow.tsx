@@ -5,7 +5,7 @@ import React, {useEffect, useState} from "react";
 import Editor, {useMonaco} from "@monaco-editor/react";
 import {monacoTheme} from "@/app/components/MonacoTheme";
 
-export const CodeEditorWindow = ({onChange, language, boilerPlate, fixedHeight, readOnly }: {
+export const CodeEditorWindow = ({onChange, language, boilerPlate, fixedHeight, readOnly}: {
     onChange: (code: string) => void,
     language: string,
     boilerPlate: string,
@@ -56,6 +56,7 @@ export const CodeEditorWindow = ({onChange, language, boilerPlate, fixedHeight, 
                 width={`100%`}
                 language={language || "javascript"}
                 value={boilerPlate}
+                theme="custom"
                 defaultValue={boilerPlate}
                 onChange={handleEditorChange}
                 options={options}
