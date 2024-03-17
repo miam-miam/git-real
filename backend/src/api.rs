@@ -1,4 +1,4 @@
-use crate::challenge::ResChallenge;
+use crate::challenge::{DbChallenge, ResChallenge};
 use crate::commit::{ReqCommit, ResCommit};
 use crate::executor;
 use crate::executor::Language;
@@ -77,15 +77,20 @@ async fn submit_commit(
         _ => return HttpResponse::NotFound().body("User id not found."),
     };
 
-    let challenge = db.get_current_challenge().await.unwrap();
+    let challenge = match db.get_current_challenge().await {
+        Ok(challenge) => challenge,
+        Err(err) => return HttpResponse::InternalServerError().body(err.to_string())
+    };
 
-    let (is_valid, _exec_result) = executor::test_language(
+    let (is_valid, _exec_result) = match executor::test_language(
         new_commit.language,
         challenge.function,
         new_commit.solution.as_str(),
     )
-    .await
-    .unwrap();
+    .await {
+        Ok(tuple) => tuple,
+        Err(err) => return HttpResponse::InternalServerError().body(err.to_string())
+    };
 
     let mut data = [0u8; 16];
     rand::thread_rng().fill_bytes(&mut data);
@@ -115,7 +120,10 @@ async fn get_commits(db: Data<AppState>, identity: Identity) -> HttpResponse {
         return HttpResponse::NotFound().body("User id not found.");
     };
 
-    let challenge = db.get_current_challenge().await.unwrap();
+    let challenge = match db.get_current_challenge().await {
+        Ok(challenge) => challenge,
+        Err(err) => return HttpResponse::InternalServerError().body(err.to_string()),
+    };
 
     match db.get_past_challenge_commits(challenge.id).await {
         Ok(commits) => HttpResponse::Ok().json(commits),
