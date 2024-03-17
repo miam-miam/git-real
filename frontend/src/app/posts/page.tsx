@@ -58,7 +58,11 @@ export default function StartPage() {
         }
     ]
 
-    const allPosts = posts.map((post, index) => {
+
+
+    const lockedPosts = posts.map((post) => ({ ...post, locked: false }));
+
+    const allPosts = lockedPosts.map((post, index) => {
         return (
             <Post props={post} key={index} />
         )

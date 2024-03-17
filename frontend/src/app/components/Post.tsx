@@ -11,11 +11,14 @@ interface IPost {
     description: string
     language: string
     code: string
-
+    locked: boolean
 }
 
 
 export const Post = ({ props }: { props: IPost }) => {
+
+    const blur = props.locked ? 'blur select-none' : ''
+
     return (
         <div className="min-w-[1000px] flex flex-col mb-24">
             <div className="flex flex-row items-center mb-5">
@@ -28,12 +31,14 @@ export const Post = ({ props }: { props: IPost }) => {
                 </Link>
             </div>
 
-            <h1 className="text-xl font-bold text-left mb-1">{props.title}</h1>
-            <div className='mb-5'>
+            <h1 className={`${blur} text-xl font-bold text-left mb-1`}>{props.title}</h1>
+            <div className={`${blur} mb-5`}>
                 <p>{props.description}</p>
             </div>
 
-            <CodeEditorWindow boilerPlate={props.code} language={props.language} onChange={() => {}} fixedHeight={true}/>
+            <div className={`${blur}`}>
+                <CodeEditorWindow boilerPlate={props.code} language={props.language} onChange={() => {}} fixedHeight={true} readOnly={true}/>
+            </div>
 
         </div>
     )
