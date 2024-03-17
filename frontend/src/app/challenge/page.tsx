@@ -22,9 +22,6 @@ export interface ICommit {
     language: string
     description: string
     challenge_id: number
-    avatar_url: string
-    name: string;
-    username: string;
 }
 
 export default function Challenge() {
@@ -42,7 +39,7 @@ export default function Challenge() {
     }, []);
 
     if (!data) {
-        return null;
+        return <div>Loading...</div>;
     }
 
     const onChange = (data: string) => {

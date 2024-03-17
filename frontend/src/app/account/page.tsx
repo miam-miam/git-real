@@ -8,12 +8,13 @@ import {Post} from "@/app/components/Post";
 import Image from "next/image";
 import {IProfile} from "@/app/components/Profile";
 import {useEffect, useState} from "react";
+import {ICommit} from "@/app/challenge/page";
 
 
 export default function Account() {
 
+    const [postData, setPostData] = useState<ICommit[]>()
     const [userData, setUserData] = useState<IProfile>()
-    const [isLoading, setLoading] = useState(true)
 
     useEffect(() => {
         fetch('http://localhost:3001/api/me', {
@@ -23,52 +24,34 @@ export default function Account() {
             .then((res) => res.json())
             .then((userData) => {
                 setUserData(userData)
-                setLoading(false)
+                fetch(`http://localhost:3001/api/user/${userData?.id}/commits`, {
+                    method: 'GET',
+                    credentials: "include"
+                })
+                    .then((res) => res.json())
+                    .then((postData) => {
+                        setPostData(postData)
+                    })
+                    .catch((err) => {
+                        console.error(err)
+                    })
             })
             .catch((err) => {
                 console.error(err)
             })
+
+
     }, [])
 
-
-    if (!userData) {
-        console.log("no data")
-        return null
+    if (!userData || !postData) {
+        return <div>Loading...</div>
     }
 
-    const posts = [
-        {
-            username: "ortovoxx",
-            profile_picture: "https://avatars.githubusercontent.com/u/56805259?v=4",
-            title: "My first commit",
-            description: "Just a test to see a longer message and how it looks like",
-            language: "typescript",
-            code: "var twoSum = function(nums, target) {\n//test\n//test\n//test\n//test\n//test\n//test\n//test\n//test\n//test\n  \n};"
-        },
-        {
-            username: "ortovoxx",
-            profile_picture: "https://avatars.githubusercontent.com/u/56805259?v=4",
-            title: "My first commit",
-            description: "Just a test to see a longer message and how it looks like",
-            language: "typescript",
-            code: "var twoSum = function(nums, target) {\n//test\n//test\n//test\n//test\n//test\n//test\n//test\n//test\n//test\n  \n};"
-        },
-                {
-            username: "ortovoxx",
-            profile_picture: "https://avatars.githubusercontent.com/u/56805259?v=4",
-            title: "My first commit",
-            description: "Just a test to see a longer message and how it looks like",
-            language: "typescript",
-            code: "var twoSum = function(nums, target) {\n//test\n//test\n//test\n//test\n//test\n//test\n//test\n//test\n//test\n  \n};"
-        },
-    ]
-
-
-    const lockedPosts = posts.map((post) => ({...post, username: undefined, locked: false }));
+    const lockedPosts = postData.map((post) => ({...post, username: undefined }));
 
     const allPosts = lockedPosts.map((post, index) => {
         return (
-            <Post props={post} key={index}/>
+            <Post props={post} locked={false} key={index}/>
         )
     })
 
@@ -104,7 +87,7 @@ export default function Account() {
                 </div>
                 <div className={'flex flex-col ml-24'}>
                     {/*<h2 className={'mb-16 text-2xl font-bold'}>Your posts</h2>*/}
-                        {allPosts}
+                    {allPosts}
                 </div>
             </div>
         </div>

@@ -11,7 +11,7 @@ export interface IProfile {
     username: string;
     avatar_url: string;
     default_language: string;
-    done_recent: boolean;
+    completed_correctly: boolean | null;
 }
 
 export const Profile = () => {
