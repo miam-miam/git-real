@@ -161,7 +161,6 @@ impl AppState {
     }
 
 
-
     pub async fn get_commit_reactions(&self, user_id: i32, commit_id: i32) -> Result<ReactionStatus, Error> {
         let mut vec = vec![];
 
