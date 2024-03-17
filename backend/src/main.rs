@@ -1,11 +1,12 @@
-mod auth;
-mod state;
-mod executor;
 mod api;
+mod auth;
 mod challenge;
 mod commit;
+mod executor;
+mod state;
 
 use crate::api::api_routes;
+use actix_cors::Cors;
 use actix_identity::IdentityMiddleware;
 use actix_session::storage::CookieSessionStore;
 use actix_session::SessionMiddleware;
@@ -43,7 +44,15 @@ async fn main() -> std::io::Result<()> {
     let app_state = web::Data::new(AppState::new(client, pool));
 
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allowed_origin("localhost:3000")
+            .allow_any_method()
+            .supports_credentials()
+            .allow_any_header()
+            .expose_any_header()
+            .max_age(3600);
         App::new()
+            .wrap(cors)
             .wrap(IdentityMiddleware::default())
             .wrap(SessionMiddleware::new(
                 CookieSessionStore::default(),
@@ -56,4 +65,48 @@ async fn main() -> std::io::Result<()> {
     .bind("localhost:3001")?
     .run()
     .await
+}
+
+#[cfg(test)]
+mod test {
+    use crate::challenge::DbChallenge;
+    use crate::executor::{FuncType, Function};
+    use chrono::{TimeZone, Utc};
+    use sqlx::postgres::PgPoolOptions;
+
+    #[tokio::test]
+    pub async fn add_challenge() {
+        let database_url = env!("DATABASE_URL");
+        let pool = PgPoolOptions::new()
+            .max_connections(12)
+            .connect(database_url)
+            .await
+            .expect("Error building a connection pool");
+
+        let challenge = DbChallenge {
+            id: 0,
+            title: "Test Challenge".to_string(),
+            description: Some("Really descriptive description".to_string()),
+            function: Function {
+                name: "add".to_string(),
+                inputs: vec![
+                    ("left".to_string(), FuncType::Int(21)),
+                    ("right".to_string(), FuncType::Int(15)),
+                ],
+                output: FuncType::Int(36),
+            },
+            date_released: Utc.timestamp_opt(1710652456, 0).unwrap().to_utc(),
+            deadline: Utc.timestamp_opt(1710663256, 0).unwrap().to_utc(),
+        };
+
+        sqlx::query!("INSERT INTO challenges (title, description, function, date_released, deadline) VALUES ($1, $2, $3, $4, $5)",
+            challenge.title,
+            challenge.description,
+            Some(serde_json::to_value(challenge.function).unwrap()),
+            challenge.date_released,
+            challenge.deadline
+        )
+            .execute(&pool)
+            .await.unwrap();
+    }
 }

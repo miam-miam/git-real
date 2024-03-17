@@ -1,17 +1,39 @@
+"use client";
+
 import Link from "next/link";
 import TimeAgo from 'javascript-time-ago'
 import en from 'javascript-time-ago/locale/en'
 import {Countdown} from "@/app/components/Countdown";
 import {Post} from "@/app/components/Post";
 import Image from "next/image";
+import {IProfile} from "@/app/components/Profile";
+import {useEffect, useState} from "react";
 
 
 export default function Account() {
 
+    const [userData, setUserData] = useState<IProfile>()
+    const [isLoading, setLoading] = useState(true)
 
-    const userData = {
-        username: "viktaur",
-        profile_picture: "https://avatars.githubusercontent.com/u/56805259?v=4",
+    useEffect(() => {
+        fetch('http://localhost:3001/api/me', {
+            method: 'GET',
+            credentials: "include"
+        })
+            .then((res) => res.json())
+            .then((userData) => {
+                setUserData(userData)
+                setLoading(false)
+            })
+            .catch((err) => {
+                console.error(err)
+            })
+    }, [])
+
+
+    if (!userData) {
+        console.log("no data")
+        return null
     }
 
     const posts = [
@@ -128,7 +150,7 @@ export default function Account() {
                     {/*<h2 className={'mb-5 text-2xl font-bold'}>Your account</h2>*/}
                     <div className={'mt-10'}>
                         <Image
-                            src={userData.profile_picture}
+                            src={userData.avatar_url}
                             alt="GitReal Logo"
                             className="w-24 h-24 rounded-full"
                             width={400}

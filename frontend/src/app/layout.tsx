@@ -1,10 +1,12 @@
-import type {Metadata} from "next";
+import type {GetServerSideProps, Metadata} from "next";
 import {Inter} from "next/font/google";
 import PrelineScript from "./components/PrelineScript"
 import "./globals.css";
 import Image from "next/image";
 import Link from "next/link";
 import {SignIn} from "@/app/components/SignIn";
+import {Profile} from "@/app/components/Profile";
+// import {Profile} from "@/app/components/Profile";
 
 const inter = Inter({subsets: ["latin"]});
 
@@ -13,30 +15,44 @@ export const metadata: Metadata = {
     description: "Time to git real",
 };
 
-export default function RootLayout({
-                                       children,
-                                   }: Readonly<{
+export default async function RootLayout({
+                                             children,
+                                         }: Readonly<{
     children: React.ReactNode;
 }>) {
 
+    // const res = await fetch('http://localhost:3001/api/me', {
+    //     method: 'GET',
+    // })
+    //
+    // let data = {profile_picture: "", username: ""}
+    // if (res.ok) {
+    //     data = await res.json()
+    //
+    //     console.log(data)
+    // }
+    //
+    // if (res.status !== 200) {
+    //     console.log(`Failed with ${res.status} ${res.statusText}`)
+    // }
 
-    const userData = {
-        username: "viktaur",
-        profile_picture: "https://avatars.githubusercontent.com/u/56805259?v=4",
-    }
+    // console.log(res)
 
-    const userEl = userData.profile_picture ? (
-        <Image
-            src={userData.profile_picture}
-            alt="GitReal Logo"
-            className="w-10 h-10 rounded-full"
-            width={400}
-            height={400}
-            priority
-        />
-    ) : (
-        <SignIn/>
-    )
+
+    // const profileEl = data.profile_picture ? (
+    //     <Link href={'/account'}>
+    //         <Image
+    //             src={data.profile_picture}
+    //             alt="GitReal Logo"
+    //             className="w-10 h-10 rounded-full"
+    //             width={400}
+    //             height={400}
+    //             priority
+    //         />
+    //     </Link>
+    // ) : (
+    //     <SignIn/>
+    // )
 
     return (
         <html lang="en">
@@ -66,9 +82,8 @@ export default function RootLayout({
                         </Link>
                     </div>
                     <div className={'grid place-content-center'}>
-                        <Link href={'/account'}>
-                            {userEl}
-                        </Link>
+                        {/*{profileEl}*/}
+                        <Profile/>
                     </div>
 
 

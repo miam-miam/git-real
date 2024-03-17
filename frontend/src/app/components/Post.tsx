@@ -3,6 +3,7 @@
 import Image from "next/image";
 import {CodeEditorWindow} from "@/app/components/EditorWindow";
 import Link from "next/link";
+import {ICommit} from "@/app/challenge/page";
 import {useState} from "react";
 
 interface IPost {
@@ -43,7 +44,11 @@ export const Post = ({props}: { props: IPost }) => {
 
     const [selectEmojiOpen, setSelectEmojiOpen] = useState(false)
 
-    const blur = props.locked ? 'blur select-none' : ''
+
+
+export const Post = ({ props, locked }: { props: ICommit, locked: boolean }) => {
+
+    const blur = locked ? 'blur select-none' : ''
 
     const emojiList = {
         heart: '❤️',
@@ -92,26 +97,19 @@ export const Post = ({props}: { props: IPost }) => {
 
     return (
         <div className="min-w-[1000px] flex flex-col mb-24">
-            {/*<div className={"flex justify-center bg-amber-500"}>*/}
-            {/*    <div className="z-[8237498237487236478] absolute grid mt-32 content-center">*/}
-            {/*        <div className={"w-96"}>*/}
-            {/*            <p>Commit your challenge to view</p>*/}
-
-            {/*        </div>*/}
-            {/*    </div>*/}
-            {/*</div>*/}
 
             {
                 props.username ? (
-                    <div className="flex flex-row items-center mb-5">
-                        <Image src={props.profile_picture} className="w-10 h-10 rounded-full mr-3"
-                               alt={`${props.username} profile picture`} width={400} height={400}/>
-                        <Link
-                            href={`https://github.com/${props.username}`}
-                        >
-                            <h2 className="text-xl font-bold">@{props.username}</h2>
-                        </Link>
-                    </div>
+                  <div className="flex flex-row items-center mb-5">
+                <Image src={props.avatar_url} className="w-10 h-10 rounded-full mr-3"
+                       alt={`${props.username} profile picture`} width={400} height={400}/>
+                <Link
+                    href={`https://github.com/${props.username}`}
+                >
+                <h2 className="text-xl font-bold">@{props.username}</h2>
+                </Link>
+            </div>
+
                 ) : null
             }
 
@@ -122,7 +120,7 @@ export const Post = ({props}: { props: IPost }) => {
             </div>
 
             <div className={`${blur}`}>
-                <CodeEditorWindow boilerPlate={props.code} language={props.language} onChange={() => {
+                <CodeEditorWindow boilerPlate={props.solution} language={props.language} onChange={() => {
                 }} fixedHeight={true} readOnly={true}/>
             </div>
 
