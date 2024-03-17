@@ -28,3 +28,6 @@ uuid = { version = "1.7.0", features = ["v4", "serde"] }
 actix-cors = "0.7.0"
 rand = "0.8.5"
 nom = "7.1.3"
+shuttle-runtime = "0.41.0"
+shuttle-actix-web = "0.41.0"
+shuttle-secrets = "0.41.0"

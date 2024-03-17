@@ -11,6 +11,7 @@ use actix_identity::IdentityMiddleware;
 use actix_session::storage::CookieSessionStore;
 use actix_session::SessionMiddleware;
 use actix_web::cookie::Key;
+use actix_web::web::ServiceConfig;
 use actix_web::{web, App, HttpServer};
 use auth::auth_routes;
 use dotenv::dotenv;
@@ -20,8 +21,9 @@ use sqlx::postgres::PgPoolOptions;
 use state::AppState;
 use std::env;
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
+#[shuttle_runtime::main]
+async fn main(
+) -> shuttle_actix_web::ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
     dotenv().ok();
     let database_url = env!("DATABASE_URL");
     let pool = PgPoolOptions::new()
@@ -43,7 +45,7 @@ async fn main() -> std::io::Result<()> {
     );
     let app_state = web::Data::new(AppState::new(client, pool));
 
-    HttpServer::new(move || {
+    let config = move |cfg: &mut ServiceConfig| {
         let cors = Cors::default()
             .allowed_origin("localhost:3000")
             .allow_any_method()
@@ -51,20 +53,21 @@ async fn main() -> std::io::Result<()> {
             .allow_any_header()
             .expose_any_header()
             .max_age(3600);
-        App::new()
-            .wrap(cors)
-            .wrap(IdentityMiddleware::default())
-            .wrap(SessionMiddleware::new(
-                CookieSessionStore::default(),
-                secret_key.clone(),
-            ))
-            .app_data(app_state.clone())
-            .service(auth_routes())
-            .service(api_routes())
-    })
-    .bind("localhost:3001")?
-    .run()
-    .await
+        cfg.service(
+            web::scope("/")
+                .wrap(cors)
+                .wrap(IdentityMiddleware::default())
+                .wrap(SessionMiddleware::new(
+                    CookieSessionStore::default(),
+                    secret_key.clone(),
+                ))
+                .app_data(app_state.clone())
+                .service(auth_routes())
+                .service(api_routes()),
+        );
+    };
+
+    Ok(config.into())
 }
 
 #[cfg(test)]
