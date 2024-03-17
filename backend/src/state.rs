@@ -162,16 +162,25 @@ impl AppState {
 
 
     pub async fn get_commit_reactions(&self, user_id: i32, commit_id: i32) -> Result<ReactionStatus, Error> {
-        let mut vec = vec![];
+        let mut vec: Vec<i32> = vec![];
+
+        // for reaction_id in 0..9 {
+        //     let reactions: Vec<ReactionTuple> = sqlx::query_as!(
+        //         ReactionTuple,
+        //         "SELECT * FROM user_reactions WHERE commit_id=$1 AND reaction_id=$2",
+        //         commit_id, reaction_id
+        //     ).fetch_all(&self.db).await?;
+        //
+        //     vec.push(reactions.len() as i32);
+        // }
 
         for reaction_id in 0..9 {
-            let reactions: Vec<ReactionTuple> = sqlx::query_as!(
-                ReactionTuple,
-                "SELECT * FROM user_reactions WHERE commit_id=$1 AND reaction_id=$2",
+            let reaction_count = sqlx::query!(
+                "SELECT COUNT(*) FROM user_reactions WHERE commit_id=$1 AND reaction_id=$2",
                 commit_id, reaction_id
-            ).fetch_all(&self.db).await?;
+            ).fetch_one(&self.db).await?;
 
-            vec.push(reactions.len() as i32);
+            vec.push(reaction_count.count.unwrap_or(0) as i32);
         }
 
         Ok(

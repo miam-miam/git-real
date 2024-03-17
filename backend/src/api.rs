@@ -216,7 +216,7 @@ async fn post_reaction(
     reaction: Json<Reaction>
 ) -> HttpResponse {
     match db.post_reaction(reaction.into_inner()).await {
-        Ok(commit) => HttpResponse::Ok().json(commit),
+        Ok(reaction) => HttpResponse::Ok().json(reaction),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string())
     }
 }
