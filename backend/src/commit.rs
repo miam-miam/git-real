@@ -19,6 +19,7 @@ pub struct ResCommit {
 #[derive(Serialize, Deserialize)]
 pub struct ReqCommit {
     pub title: String,
-    pub description: String,
+    pub description: Option<String>,
     pub solution: String,
+    pub language: Language,
 }
