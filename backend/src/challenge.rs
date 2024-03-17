@@ -1,11 +1,22 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, sqlx::Type)]
 pub struct Challenge {
-    challenge_id: u64,
-    title: String,
-    description: String,
-    date_released: DateTime<Utc>
+    pub id: i32,
+    pub title: String,
+    pub description: String,
+    pub example_input: String,
+    pub example_output: String,
+    pub date_released: DateTime<Utc>,
+    pub deadline: DateTime<Utc>,
+    pub current: bool,
 }
+
+// #[derive(Serialize, Deserialize, sqlx::Type)]
+// struct LangBoilerplate {
+//     python: String,
+//     javascript: String,
+//     java: String,
+//     cpp: String
+// }
