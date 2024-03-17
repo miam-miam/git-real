@@ -158,21 +158,21 @@ impl AppState {
         Ok(result)
     }
 
-    pub async fn get_past_challenge_commits(
-        &self,
-        challenge_id: i32,
-    ) -> Result<Vec<ResCommit>, Error> {
+    pub async fn get_past_challenge_commits(&self) -> Result<Vec<ResCommit>, Error> {
         let result = sqlx::query_as!(
             ResCommit,
-            "SELECT * FROM public.commits WHERE challenge_id = $1 AND is_valid = 'true' ORDER BY date DESC",
-            challenge_id
+            "SELECT * FROM public.commits WHERE is_valid = 'true' ORDER BY date DESC",
         )
         .fetch_all(&self.db)
         .await?;
         Ok(result)
     }
-    
-    pub async fn get_commit_reactions(&self, user_id: i32, commit_id: i32) -> Result<ReactionStatus, Error> {
+
+    pub async fn get_commit_reactions(
+        &self,
+        user_id: i32,
+        commit_id: i32,
+    ) -> Result<ReactionStatus, Error> {
         let mut vec: Vec<i32> = vec![];
 
         // for reaction_id in 0..9 {
@@ -188,8 +188,11 @@ impl AppState {
         for reaction_id in 0..9 {
             let reaction_count = sqlx::query!(
                 "SELECT COUNT(*) FROM user_reactions WHERE commit_id=$1 AND reaction_id=$2",
-                commit_id, reaction_id
-            ).fetch_one(&self.db).await?;
+                commit_id,
+                reaction_id
+            )
+            .fetch_one(&self.db)
+            .await?;
 
             vec.push(reaction_count.count.unwrap_or(0) as i32);
         }

@@ -85,15 +85,18 @@ mod test {
 
         let challenge = DbChallenge {
             id: 0,
-            title: "Test Challenge".to_string(),
-            description: Some("Really descriptive description".to_string()),
+            title: "Climbing Stairs".to_string(),
+            description: Some(
+                r#"Write a function that takes the an unsigned 
+                
+integer and returns the number of '1' bits it has (also known as the Hamming weight).
+"#
+                .to_string(),
+            ),
             function: Function {
-                name: "add".to_string(),
-                inputs: vec![
-                    ("left".to_string(), FuncType::Int(21)),
-                    ("right".to_string(), FuncType::Int(15)),
-                ],
-                output: FuncType::Int(36),
+                name: "hamming_weight".to_string(),
+                inputs: vec![("num".to_string(), FuncType::Int(11))],
+                output: FuncType::Int(3),
             },
             date_released: Utc.timestamp_opt(1710652456, 0).unwrap().to_utc(),
             deadline: Utc.timestamp_opt(1710663256, 0).unwrap().to_utc(),
