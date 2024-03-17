@@ -1,18 +1,36 @@
+"use client";
+
 import Link from "next/link";
 import TimeAgo from 'javascript-time-ago'
 import en from 'javascript-time-ago/locale/en'
 import {Countdown} from "@/app/components/Countdown";
+import {fetchChallenge} from "@/app/utilities/fetchChallenge";
 
 
-export default function StartPage() {
 
-    const lastGitRealTime = Date.now() - 3 * 60 * 60 * 1000; // TODO replace with api call
-    const happeningNow = true;
+
+export default async function StartPage() {
+
+    const data = await fetchChallenge()
+
+    if (!data) {
+        console.log("no challenge data on start")
+        return null;
+    }
+
+
+    const now = Date.now();
+    const lastGitRealStartTime = new Date(data.date_released).getTime()
+    const lastGitRealEndTime = new Date(data.deadline).getTime()
+
+    const happeningNow = lastGitRealStartTime < now && now < lastGitRealEndTime;
 
     TimeAgo.addDefaultLocale(en)
     const timeAgo = new TimeAgo('en-UK')
 
     if (happeningNow) {
+
+        const secondsSinceLastGitReal = (now - lastGitRealStartTime) / 1000;
 
         return (
             <div className="max-w-7xl relative flex place-items-center">
@@ -20,9 +38,9 @@ export default function StartPage() {
                     <h1 className="text-9xl font-bold mb-10 text-center">
                         It's GitReal time!
                     </h1>
-                    <h3 className="text-2xl font-bold mb-10 text-center">
-                        <Countdown textSize={"text-6xl"}/>
-                    </h3>
+                    <div className="text-2xl font-bold mb-10 text-center">
+                        <Countdown textSize={"text-6xl"} timeLeft={secondsSinceLastGitReal}/>
+                    </div>
                     <div className='grid place-items-center'>
                         <Link href={'challenge'}>
                             <button type="button"
@@ -43,7 +61,7 @@ export default function StartPage() {
                     GitReal is waiting...
                 </h1>
                 <h3 className="text-2xl font-bold mb-10 text-center">
-                    Last GitReal was {timeAgo.format(lastGitRealTime)}
+                    Last GitReal was {timeAgo.format(lastGitRealEndTime)}
                 </h3>
                 <div className='grid place-items-center'>
                     <Link href={'editor'}>

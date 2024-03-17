@@ -14,6 +14,7 @@ const LANGUAGES: [Language; 3] = [Language::Rust, Language::Python, Language::Ty
 
 #[derive(Copy, Clone, Debug, Serialize, Deserialize, Default, sqlx::Type, Eq, PartialEq, Hash)]
 #[repr(i32)]
+#[serde(rename_all = "lowercase")]
 pub enum Language {
     #[default]
     Rust = 0,
