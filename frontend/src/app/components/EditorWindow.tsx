@@ -5,10 +5,12 @@ import React, {useEffect, useState} from "react";
 import Editor, {useMonaco} from "@monaco-editor/react";
 import {monacoTheme} from "@/app/components/MonacoTheme";
 
-export const CodeEditorWindow = ({onChange, language, boilerPlate}: {
+export const CodeEditorWindow = ({onChange, language, boilerPlate, fixedHeight, readOnly }: {
     onChange: (code: string) => void,
     language: string,
-    boilerPlate: string
+    boilerPlate: string,
+    fixedHeight?: boolean,
+    readOnly?: boolean
 }) => {
     const [value, setValue] = useState(boilerPlate || "");
 
@@ -30,6 +32,7 @@ export const CodeEditorWindow = ({onChange, language, boilerPlate}: {
     const options = {
         selectOnLineNumbers: true,
         scrollBeyondLastLine: false,
+        readOnly: readOnly,
         fontSize: 19,
         overviewRulerLanes: 0,
         minimap: {
@@ -49,7 +52,7 @@ export const CodeEditorWindow = ({onChange, language, boilerPlate}: {
     return (
         <div className="overlay rounded-md overflow-hidden w-full h-full shadow-4xl">
             <Editor
-                height="20vh"
+                height={fixedHeight ? `calc(${(boilerPlate.split("\n").length + 1) * 26}px + 40px)` : "20vh"}
                 width={`100%`}
                 language={language || "javascript"}
                 value={boilerPlate}
