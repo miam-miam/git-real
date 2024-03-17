@@ -120,12 +120,7 @@ async fn get_commits(db: Data<AppState>, identity: Identity) -> HttpResponse {
         return HttpResponse::NotFound().body("User id not found.");
     };
 
-    let challenge = match db.get_current_challenge().await {
-        Ok(challenge) => challenge,
-        Err(err) => return HttpResponse::InternalServerError().body(err.to_string()),
-    };
-
-    match db.get_past_challenge_commits(challenge.id).await {
+    match db.get_past_challenge_commits().await {
         Ok(commits) => HttpResponse::Ok().json(commits),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
@@ -219,12 +214,9 @@ async fn get_user_commits(db: Data<AppState>, username: Path<i64>) -> HttpRespon
 }
 
 #[post("/reactions")]
-async fn post_reaction(
-    db: Data<AppState>,
-    reaction: Json<Reaction>
-) -> HttpResponse {
+async fn post_reaction(db: Data<AppState>, reaction: Json<Reaction>) -> HttpResponse {
     match db.post_reaction(reaction.into_inner()).await {
         Ok(reaction) => HttpResponse::Ok().json(reaction),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
