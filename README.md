@@ -1,14 +1,20 @@
 
 # GitReal.
 
-A project for the University of Southampton 2024 Electronics and Computer Science Society hackathon (Fusion Hack)
+The first place project for the University of Southampton 2024 Electronics and Computer Science Society hackathon (Fusion Hack)
 
+## Screenshots
+
+Main home page
 ![Main page](./images/main%20page.png)
 
+Start page when it's ready to GitReal!
 ![Ready to start page](./images/ready%20page.png)
 
+Challenge page, editor for your solution
 ![Challenge page](./images/challenge%20page.png)
 
+View others' solutions and react to them
 ![Explore page](./images/explore%20page.png)
 
 ## Hackathon
