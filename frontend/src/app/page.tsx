@@ -33,7 +33,7 @@ export default function Home() {
             </div>
             <div className='w-5xl'>
                 <Image
-                    src="/snippet.svg"
+                    src="/snippet.png"
                     alt="Vercel Logo"
                     width={1200}
                     height={500}
