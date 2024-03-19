@@ -1,0 +1,48 @@
+# set a refresh rate
+refresh_rate: 30 seconds
+
+# appenders
+appenders:
+  # this appender will append to the console
+  stdout:
+    kind: console
+  # this appender will append to a log file
+  requests:
+    kind: file
+    path: "log/requests.log"
+    # this is a simple string encoder - this will be explained below
+    encoder:
+      pattern: "{d} - {m}{n}"
+  rolling_appender:
+    kind: rolling_file
+    path: log/foo.log
+    append: true
+    encoder:
+      kind: pattern
+      pattern: "{d} - {m}{n}"
+    policy:
+      kind: compound
+      trigger:
+        kind: size
+        limit: 10 mb
+      # upon reaching the max log size, the file simply gets deleted on successful roll
+      roller:
+        kind: delete
+
+
+# the appender that prints to stdout will only print if the log level of the message is warn or above
+root:
+  level: info
+  appenders:
+    - stdout
+
+# set minimum logging level - log messages below the mnimum won't be recorded
+loggers:
+  app::backend::db:
+    level: info
+
+  app::requests:
+    level: info
+    appenders:
+      - requests
+    additive: false
