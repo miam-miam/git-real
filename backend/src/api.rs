@@ -7,7 +7,9 @@ use actix_identity::Identity;
 use actix_web::cookie::time::macros::date;
 use actix_web::web::{Data, Json, Path};
 use actix_web::{get, post, web, HttpResponse, Scope};
+use actix_web::http::header::ACCESS_CONTROL_ALLOW_ORIGIN;
 use chrono::Utc;
+use log::error;
 use nom::HexDisplay;
 use rand::RngCore;
 use sqlx::Error;
@@ -38,6 +40,7 @@ async fn get_current_challenge(db: Data<AppState>, identity: Identity) -> HttpRe
         _ => return HttpResponse::NotFound().body("User id not found."),
     };
 
+    // we need to get the user in order to set the default language
     let user = match db.get_user_by_id(user_id).await {
         Ok(user) => user,
         Err(err) => return HttpResponse::InternalServerError().body(err.to_string()),
@@ -137,14 +140,24 @@ async fn get_commit_by_id(db: Data<AppState>, commit_id: Path<i32>) -> HttpRespo
 #[get("/me")]
 async fn current_user(db: Data<AppState>, identity: Identity) -> HttpResponse {
     let user_id = match identity.id() {
-        Ok(user_id) => user_id.parse().unwrap(),
-        _ => return HttpResponse::NotFound().body("User id not found."),
+        Ok(user_id) => match user_id.parse() {
+            Ok(id) => id,
+            _ => {
+                error!("User id is not a number");
+                return HttpResponse::NotFound().body("User id is not a number.")
+            }
+        },
+        _ => {
+            error!("User id not found in the identity");
+            return HttpResponse::NotFound().body("User id not found.")
+        },
     };
 
     match db.get_me_info(user_id).await {
         Ok(user) => HttpResponse::Ok().json(user),
         Err(err) => {
             eprintln!("{err}");
+            error!("Could not fetch user information: {err}");
             HttpResponse::InternalServerError().body(err.to_string())
         }
     }
@@ -166,6 +179,7 @@ async fn get_past_challenge(db: Data<AppState>, challenge_id: Path<i32>) -> Http
     }
 }
 
+// TODO re-specify endpoint, since {id} is useless ATM.
 #[get("/challenges/{id}/commits")]
 async fn get_past_challenge_commits(db: Data<AppState>, challenge_id: Path<i32>) -> HttpResponse {
     match db.get_past_challenge_commits().await {

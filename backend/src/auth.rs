@@ -101,9 +101,9 @@ async fn github_oauth_redirect(
 
     Identity::login(&request.extensions(), user_info.id.to_string()).unwrap();
 
-    let env = std::env::var("FRONTEND_REDIRECT_URL").unwrap();
+    let redirect_url = std::env::var("FRONTEND_REDIRECT_URL").unwrap();
 
-    Redirect::to(env)
+    Redirect::to(redirect_url)
     // HttpResponse::Ok().body(format!("github done! {env}"))
 }
 pub async fn logout(identity: Identity) -> impl Responder {

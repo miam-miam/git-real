@@ -19,11 +19,10 @@ export const fetchChallenge = async (): Promise<IChallenge | null> => {
     const res = await fetch('http://localhost:3001/api/challenge', {
         method: 'GET',
         credentials: "include"
-    })
+    });
 
     if (!res.ok) {
         console.error("res challenge", res.status, res.statusText)
-
     }
 
     let data: IChallenge;
