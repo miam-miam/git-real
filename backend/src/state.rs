@@ -2,6 +2,7 @@ use crate::auth::{MeInfo, UserInfo};
 use crate::challenge::DbChallenge;
 use crate::commit::{Reaction, ReactionStatus, ReactionTuple, ReqCommit, ResCommit};
 use chrono::Utc;
+use log::info;
 use oauth2::basic::BasicClient;
 use sqlx::error::Error;
 use sqlx::{Pool, Postgres};
@@ -89,7 +90,7 @@ impl AppState {
     }
 
     pub async fn get_me_info(&self, user_id: i64) -> anyhow::Result<MeInfo> {
-        println!("{user_id}");
+        info!("User id is {user_id}");
         let user =
             sqlx::query_as::<_, UserInfo>(&format!("SELECT * FROM users WHERE id = {user_id}"))
                 .fetch_one(&self.db)
@@ -97,7 +98,7 @@ impl AppState {
         // let user = sqlx::query_as!(UserInfo, "SELECT * FROM users WHERE id = $1", user_id)
         //     .fetch_one(&self.db)
         //     .await?;
-        println!("passing");
+        info!("User is {:?}", user);
         let record = sqlx::query!(
             "SELECT is_valid FROM commits WHERE user_id = $1 AND is_valid = 'true' ORDER by date DESC LIMIT 1",
             user_id
@@ -105,7 +106,7 @@ impl AppState {
         .fetch_optional(&self.db)
         .await?;
 
-        println!("passing2");
+        info!("Record is {:?}", record);
 
         Ok(MeInfo {
             id: user.id,
