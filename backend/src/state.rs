@@ -1,6 +1,6 @@
 use crate::auth::{MeInfo, UserInfo};
 use crate::challenge::DbChallenge;
-use crate::commit::{Reaction, ReactionStatus, ReactionTuple, ReqCommit, ResCommit};
+use crate::commit::{Reaction, ReactionState, ReqCommit, ResCommit};
 use chrono::Utc;
 use log::info;
 use oauth2::basic::BasicClient;
@@ -173,22 +173,15 @@ impl AppState {
         &self,
         user_id: i32,
         commit_id: i32,
-    ) -> Result<ReactionStatus, Error> {
+    ) -> Result<ReactionState, Error> {
         let mut vec: Vec<i32> = vec![];
-
-        // for reaction_id in 0..9 {
-        //     let reactions: Vec<ReactionTuple> = sqlx::query_as!(
-        //         ReactionTuple,
-        //         "SELECT * FROM user_reactions WHERE commit_id=$1 AND reaction_id=$2",
-        //         commit_id, reaction_id
-        //     ).fetch_all(&self.db).await?;
-        //
-        //     vec.push(reactions.len() as i32);
-        // }
 
         for reaction_id in 0..9 {
             let reaction_count = sqlx::query!(
-                "SELECT COUNT(*) FROM user_reactions WHERE commit_id=$1 AND reaction_id=$2",
+                r#"
+                SELECT COUNT(*) FROM user_reactions
+                WHERE commit_id=$1 AND reaction_id=$2 AND active=true
+                "#,
                 commit_id,
                 reaction_id
             )
@@ -198,7 +191,7 @@ impl AppState {
             vec.push(reaction_count.count.unwrap_or(0) as i32);
         }
 
-        Ok(ReactionStatus {
+        let reaction_state = ReactionState {
             heart: vec[0],
             rocket: vec[1],
             thumbsup: vec[2],
@@ -208,47 +201,30 @@ impl AppState {
             tada: vec[6],
             facepalm: vec[7],
             nerd: vec[8],
-        })
-    }
-
-    pub async fn post_reaction(&self, reaction: Reaction) -> Result<ReactionStatus, Error> {
-        let result = sqlx::query!(
-            "SELECT * FROM user_reactions WHERE user_id=$1 AND commit_id=$2 AND reaction_id=$3",
-            reaction.user_id,
-            reaction.commit_id,
-            reaction.reaction_id
-        )
-        .fetch_optional(&self.db)
-        .await;
-
-        let exists = match result {
-            Ok(record) => record.is_some(),
-            Err(err) => return Err(err),
         };
 
-        if !exists && reaction.active {
-            sqlx::query!(
-                "INSERT INTO user_reactions (reaction_id, user_id, commit_id) VALUES ($1, $2, $3)",
-                reaction.reaction_id,
-                reaction.user_id,
-                reaction.commit_id
-            )
+        info!("Reaction state is {:?}", reaction_state);
+
+        Ok(reaction_state)
+    }
+
+    pub async fn post_reaction(&self, incoming: Reaction) -> Result<ReactionState, Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO user_reactions (reaction_id, user_id, commit_id, active)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (reaction_id, user_id, commit_id, active)
+            DO UPDATE SET active = $4
+            "#,
+            incoming.reaction_id,
+            incoming.user_id,
+            incoming.commit_id,
+            incoming.active,
+        )
             .execute(&self.db)
             .await?;
-        }
 
-        if exists && !reaction.active {
-            sqlx::query!(
-                "DELETE FROM user_reactions WHERE user_id=$1 AND commit_id=$2 AND reaction_id=$3",
-                reaction.user_id,
-                reaction.commit_id,
-                reaction.reaction_id
-            )
-            .execute(&self.db)
-            .await?;
-        }
-
-        self.get_commit_reactions(reaction.user_id, reaction.commit_id)
+        self.get_commit_reactions(incoming.user_id, incoming.commit_id)
             .await
     }
 }

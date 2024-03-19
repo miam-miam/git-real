@@ -67,7 +67,7 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
             .then((res) => res.json())
             .then((reactions) => setReactions(reactions || undefined))
             .catch((err) => console.error(err))
-    }, []);
+    }, [props.id, props.user_id]);
 
     if (!data) {
         return <div>Loading...</div>;

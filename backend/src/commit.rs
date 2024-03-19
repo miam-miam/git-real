@@ -24,8 +24,8 @@ pub struct ReqCommit {
     pub language: Language,
 }
 
-#[derive(Serialize, Deserialize, Default)]
-pub struct ReactionStatus {
+#[derive(Serialize, Deserialize, Default, Debug)]
+pub struct ReactionState {
     pub heart: i32,
     pub rocket: i32,
     pub thumbsup: i32,
@@ -38,14 +38,14 @@ pub struct ReactionStatus {
 }
 
 
-#[derive(Serialize, Deserialize, sqlx::Type)]
-pub struct ReactionTuple {
-    pub reaction_id: i32,
-    pub user_id: i32,
-    pub commit_id: i32,
-}
+// #[derive(Serialize, Deserialize, sqlx::Type, Debug)]
+// pub struct ReactionTuple {
+//     pub reaction_id: i32,
+//     pub user_id: i32,
+//     pub commit_id: i32,
+// }
 
-#[derive(Serialize, Deserialize, sqlx::Type)]
+#[derive(Serialize, Deserialize, sqlx::Type, Debug)]
 pub struct Reaction {
     pub reaction_id: i32,
     pub user_id: i32,
