@@ -1,6 +1,6 @@
 use crate::auth::{MeInfo, UserInfo};
 use crate::challenge::DbChallenge;
-use crate::commit::{Reaction, ReactionState, ReqCommit, ResCommit};
+use crate::commit::{Reaction, ReactionState, ReqCommit, ResCommit, UserReactions};
 use chrono::Utc;
 use log::info;
 use oauth2::basic::BasicClient;
@@ -90,7 +90,7 @@ impl AppState {
     }
 
     pub async fn get_me_info(&self, user_id: i64) -> anyhow::Result<MeInfo> {
-        info!("User id is {user_id}");
+        // info!("User id is {user_id}");
         let user =
             sqlx::query_as::<_, UserInfo>(&format!("SELECT * FROM users WHERE id = {user_id}"))
                 .fetch_one(&self.db)
@@ -98,15 +98,20 @@ impl AppState {
         // let user = sqlx::query_as!(UserInfo, "SELECT * FROM users WHERE id = $1", user_id)
         //     .fetch_one(&self.db)
         //     .await?;
-        info!("User is {:?}", user);
+        // info!("User is {:?}", user);
         let record = sqlx::query!(
-            "SELECT is_valid FROM commits WHERE user_id = $1 AND is_valid = 'true' ORDER by date DESC LIMIT 1",
+            r#"
+            SELECT is_valid
+            FROM commits
+            WHERE user_id = $1 AND is_valid = 'true'
+            ORDER by date DESC LIMIT 1
+            "#,
             user_id
         )
         .fetch_optional(&self.db)
         .await?;
 
-        info!("Record is {:?}", record);
+        // info!("Record is {:?}", record);
 
         Ok(MeInfo {
             id: user.id,
@@ -120,7 +125,11 @@ impl AppState {
 
     pub async fn add_commit(&self, commit: ResCommit) -> Result<ResCommit, Error> {
         let result = sqlx::query!(
-            "INSERT INTO commits (commit_hash, user_id, date, title, solution, is_valid, language, description, challenge_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id",
+            r#"
+            INSERT INTO commits (commit_hash, user_id, date, title, solution, is_valid, language, description, challenge_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING id
+            "#,
             commit.commit_hash,
             commit.user_id,
             commit.date,
@@ -171,7 +180,6 @@ impl AppState {
 
     pub async fn get_commit_reactions(
         &self,
-        user_id: i32,
         commit_id: i32,
     ) -> Result<ReactionState, Error> {
         let mut vec: Vec<i32> = vec![];
@@ -203,9 +211,52 @@ impl AppState {
             nerd: vec[8],
         };
 
-        info!("Reaction state is {:?}", reaction_state);
+        // info!("Reaction state is {:?}", reaction_state);
 
         Ok(reaction_state)
+    }
+
+    pub async fn get_commit_reactions_by_user(
+        &self,
+        user_id: i32,
+        commit_id: i32
+    ) -> Result<UserReactions, Error> {
+        let mut vec: Vec<bool> = vec![];
+
+        for reaction_id in 0..9 {
+            let active_record = sqlx::query!(
+                r#"
+                SELECT active FROM user_reactions
+                WHERE commit_id=$1 AND reaction_id=$2 AND user_id=$3
+                "#,
+                commit_id,
+                reaction_id,
+                user_id
+            )
+                .fetch_optional(&self.db)
+                .await?;
+
+            let active= match active_record {
+                Some(r) => r.active,
+                None => false
+            };
+
+            vec.push(active);
+        }
+
+        let user_reactions = UserReactions {
+            heart: vec[0],
+            rocket: vec[1],
+            thumbsup: vec[2],
+            thumbsdown: vec[3],
+            skull: vec[4],
+            trash: vec[5],
+            tada: vec[6],
+            facepalm: vec[7],
+            nerd: vec[8],
+        };
+
+        Ok(user_reactions)
     }
 
     pub async fn post_reaction(&self, incoming: Reaction) -> Result<ReactionState, Error> {
@@ -213,7 +264,7 @@ impl AppState {
             r#"
             INSERT INTO user_reactions (reaction_id, user_id, commit_id, active)
             VALUES ($1, $2, $3, $4)
-            ON CONFLICT (reaction_id, user_id, commit_id, active)
+            ON CONFLICT (reaction_id, user_id, commit_id)
             DO UPDATE SET active = $4
             "#,
             incoming.reaction_id,
@@ -224,7 +275,17 @@ impl AppState {
             .execute(&self.db)
             .await?;
 
-        self.get_commit_reactions(incoming.user_id, incoming.commit_id)
+        self.get_commit_reactions(incoming.commit_id)
             .await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn post_reaction_test() {
+
     }
 }

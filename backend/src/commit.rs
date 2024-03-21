@@ -37,6 +37,19 @@ pub struct ReactionState {
     pub nerd: i32
 }
 
+#[derive(Serialize, Deserialize, Default, Debug)]
+pub struct UserReactions {
+    pub heart: bool,
+    pub rocket: bool,
+    pub thumbsup: bool,
+    pub thumbsdown: bool,
+    pub skull: bool,
+    pub trash: bool,
+    pub tada: bool,
+    pub facepalm: bool,
+    pub nerd: bool
+}
+
 
 // #[derive(Serialize, Deserialize, sqlx::Type, Debug)]
 // pub struct ReactionTuple {
