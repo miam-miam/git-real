@@ -6,28 +6,18 @@ import Link from "next/link";
 import {ICommit} from "@/app/challenge/page";
 import {useEffect, useState} from "react";
 
-export interface IReactionState {
-    heart: number
-    rocket: number
-    thumbsup: number
-    thumbsdown: number
-    skull: number
-    trash: number
-    tada: number
-    facepalm: number
-    nerd: number
-}
-
-export interface IUserReactions {
-    heart: boolean
-    rocket: boolean
-    thumbsup: boolean
-    thumbsdown: boolean
-    skull: boolean
-    trash: boolean
-    tada: boolean
-    facepalm: boolean
-    nerd: boolean
+export type IReactionState = Reactions<number>
+export type IUserReactions = Reactions<boolean>
+export interface Reactions<T> {
+    heart: T
+    rocket: T
+    thumbsup: T
+    thumbsdown: T
+    skull: T
+    trash: T
+    tada: T
+    facepalm: T
+    nerd: T
 }
 
 export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
@@ -195,7 +185,7 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
                         <Link
                             href={`https://github.com/${data.username}`}
                         >
-                            <h2 className="text-xl font-bold">@{data.username}</h2>
+                            <h2 className="text-xl font-bold text-white">@{data.username}</h2>
                         </Link>
                     </div>
 
@@ -203,7 +193,7 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
             }
 
 
-            <div className={'flex flex-row'}>
+            <div className={'flex flex-row text-white'}>
                 <div className={'w-full'}>
                     <h1 className={`${blur} text-xl font-bold text-left mb-1`}>{props.title}</h1>
                     <div className={`${blur} mb-5`}>
