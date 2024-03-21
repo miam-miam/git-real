@@ -24,30 +24,20 @@ pub struct ReqCommit {
     pub language: Language,
 }
 
-#[derive(Serialize, Deserialize, Default, Debug)]
-pub struct ReactionState {
-    pub heart: i32,
-    pub rocket: i32,
-    pub thumbsup: i32,
-    pub thumbsdown: i32,
-    pub skull: i32,
-    pub trash: i32,
-    pub tada: i32,
-    pub facepalm: i32,
-    pub nerd: i32
-}
+pub type ReactionState = ReactionHolder<i32>;
+pub type UserReactions = ReactionHolder<bool>;
 
 #[derive(Serialize, Deserialize, Default, Debug)]
-pub struct UserReactions {
-    pub heart: bool,
-    pub rocket: bool,
-    pub thumbsup: bool,
-    pub thumbsdown: bool,
-    pub skull: bool,
-    pub trash: bool,
-    pub tada: bool,
-    pub facepalm: bool,
-    pub nerd: bool
+pub struct ReactionHolder<T> {
+    pub heart: T,
+    pub rocket: T,
+    pub thumbsup: T,
+    pub thumbsdown: T,
+    pub skull: T,
+    pub trash: T,
+    pub tada: T,
+    pub facepalm: T,
+    pub nerd: T
 }
 
 
