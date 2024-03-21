@@ -103,7 +103,6 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
                 // user_id: props.user_id,
                 commit_id: props.id,
                 reaction_id: Object.keys(reactions).indexOf(key),
-                // active: false,
                 active
             }),
             headers: {
@@ -161,6 +160,8 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
 
                 sendReaction(key, false);
             } else {
+                setUserReactions({...userReactions, [key]: true})
+                setReactions({...reactions, [key]: value + 1})
                 sendReaction(key, true);
             }
 
@@ -184,8 +185,8 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
 
         }
 
-        updateReactionState();
-        updateUserReactions();
+        // updateReactionState();
+        // updateUserReactions();
 
         return (
             <button key={index} onClick={onClick} type="button"
@@ -205,39 +206,42 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
                 setUserReactions({...userReactions, [key]: false})
                 setReactions({...reactions, [key]: value - 1})
 
-                await fetch('http://localhost:3001/api/reactions', {
-                    method: 'POST',
-                    credentials: "include",
-                    body: JSON.stringify({
-                        user_id: props.user_id,
-                        commit_id: props.id,
-                        reaction_id: Object.keys(reactions).indexOf(key),
-                        active: false
-                    }),
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                })
+                // await fetch('http://localhost:3001/api/reactions', {
+                //     method: 'POST',
+                //     credentials: "include",
+                //     body: JSON.stringify({
+                //         user_id: props.user_id,
+                //         commit_id: props.id,
+                //         reaction_id: Object.keys(reactions).indexOf(key),
+                //         active: false
+                //     }),
+                //     headers: {
+                //         'Content-Type': 'application/json'
+                //     }
+                // })
+                sendReaction(key, false)
 
-                return
+                // return
+            } else {
+                setUserReactions({...userReactions, [key]: true})
+                setReactions({...reactions, [key]: value + 1})
+                sendReaction(key, true)
             }
 
-            setUserReactions({...userReactions, [key]: true})
-            setReactions({...reactions, [key]: value + 1})
 
-            await fetch('http://localhost:3001/api/reactions', {
-                method: 'POST',
-                credentials: "include",
-                body: JSON.stringify({
-                    user_id: props.user_id,
-                    commit_id: props.id,
-                    reaction_id: Object.keys(reactions).indexOf(key),
-                    active: true
-                }),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
+            // await fetch('http://localhost:3001/api/reactions', {
+            //     method: 'POST',
+            //     credentials: "include",
+            //     body: JSON.stringify({
+            //         user_id: props.user_id,
+            //         commit_id: props.id,
+            //         reaction_id: Object.keys(reactions).indexOf(key),
+            //         active: true
+            //     }),
+            //     headers: {
+            //         'Content-Type': 'application/json'
+            //     }
+            // })
 
         }
 
