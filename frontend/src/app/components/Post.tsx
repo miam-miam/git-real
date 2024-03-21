@@ -143,50 +143,13 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
             if (userReactions[key as keyof typeof reactions]) {
                 setUserReactions({...userReactions, [key]: false})
                 setReactions({...reactions, [key]: value - 1})
-
-                // await fetch('http://localhost:3001/api/reactions', {
-                //     method: 'POST',
-                //     credentials: "include",
-                //     body: JSON.stringify({
-                //         user_id: props.user_id,
-                //         commit_id: props.id,
-                //         reaction_id: Object.keys(reactions).indexOf(key),
-                //         active: false
-                //     }),
-                //     headers: {
-                //         'Content-Type': 'application/json'
-                //     }
-                // })
-
                 sendReaction(key, false);
             } else {
                 setUserReactions({...userReactions, [key]: true})
                 setReactions({...reactions, [key]: value + 1})
                 sendReaction(key, true);
             }
-
-            // setUserReactions({...userReactions, [key]: true})
-            // setReactions({...reactions, [key]: value + 1})
-
-            // await fetch('http://localhost:3001/api/reactions', {
-            //     method: 'POST',
-            //     credentials: "include",
-            //     body: JSON.stringify({
-            //         user_id: props.user_id,
-            //         commit_id: props.id,
-            //         reaction_id: Object.keys(reactions).indexOf(key),
-            //         active: true
-            //     }),
-            //     headers: {
-            //         'Content-Type': 'application/json'
-            //     }
-            // })
-            // sendReaction(key, true)
-
         }
-
-        // updateReactionState();
-        // updateUserReactions();
 
         return (
             <button key={index} onClick={onClick} type="button"
@@ -201,48 +164,15 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
         if (value !== 0) return null
 
         const onClick = async () => {
-
             if (userReactions[key as keyof typeof reactions]) {
                 setUserReactions({...userReactions, [key]: false})
                 setReactions({...reactions, [key]: value - 1})
-
-                // await fetch('http://localhost:3001/api/reactions', {
-                //     method: 'POST',
-                //     credentials: "include",
-                //     body: JSON.stringify({
-                //         user_id: props.user_id,
-                //         commit_id: props.id,
-                //         reaction_id: Object.keys(reactions).indexOf(key),
-                //         active: false
-                //     }),
-                //     headers: {
-                //         'Content-Type': 'application/json'
-                //     }
-                // })
                 sendReaction(key, false)
-
-                // return
             } else {
                 setUserReactions({...userReactions, [key]: true})
                 setReactions({...reactions, [key]: value + 1})
                 sendReaction(key, true)
             }
-
-
-            // await fetch('http://localhost:3001/api/reactions', {
-            //     method: 'POST',
-            //     credentials: "include",
-            //     body: JSON.stringify({
-            //         user_id: props.user_id,
-            //         commit_id: props.id,
-            //         reaction_id: Object.keys(reactions).indexOf(key),
-            //         active: true
-            //     }),
-            //     headers: {
-            //         'Content-Type': 'application/json'
-            //     }
-            // })
-
         }
 
         return (
