@@ -65,3 +65,11 @@ pub struct Reaction {
     pub commit_id: i32,
     pub active: bool
 }
+
+// Used for the API endpoint
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ReqReaction {
+    pub reaction_id: i32,
+    pub commit_id: i32,
+    pub active: bool
+}

@@ -1,5 +1,6 @@
+use std::convert::identity;
 use crate::challenge::{DbChallenge, ResChallenge};
-use crate::commit::{Reaction, ReqCommit, ResCommit};
+use crate::commit::{Reaction, ReqCommit, ReqReaction, ResCommit};
 use crate::executor;
 use crate::executor::Language;
 use crate::state::AppState;
@@ -10,6 +11,7 @@ use actix_web::{get, post, web, HttpResponse, Scope};
 use actix_web::http::header::ACCESS_CONTROL_ALLOW_ORIGIN;
 use chrono::Utc;
 use log::error;
+use nom::complete::bool;
 use nom::HexDisplay;
 use rand::RngCore;
 use sqlx::Error;
@@ -260,10 +262,16 @@ async fn get_commit_reactions_of_client(
     challenge_id: Path<i32>
 ) -> HttpResponse {
     let user_id: i32 = match identity.id() {
-        Ok(user_id) => user_id.parse().unwrap(),
-        _ => {
-            error!("User id not found");
-            return HttpResponse::NotFound().body("User id not found.")
+        Ok(user_id) => match user_id.parse() {
+            Ok(id) => id,
+            Err(err) => {
+                error!("Could not parse user id: {err}");
+                return HttpResponse::InternalServerError().body(err.to_string())
+            }
+        },
+        Err(err) => {
+            error!("{err}");
+            return HttpResponse::NotFound().body(err.to_string())
         },
     };
 
@@ -302,8 +310,30 @@ async fn get_user_commits(db: Data<AppState>, username: Path<i64>) -> HttpRespon
 }
 
 #[post("/reactions")]
-async fn post_reaction(db: Data<AppState>, reaction: Json<Reaction>) -> HttpResponse {
-    match db.post_reaction(reaction.into_inner()).await {
+async fn post_reaction(db: Data<AppState>, identity: Identity, req_reaction: Json<ReqReaction>) -> HttpResponse {
+    // Represents the user who reacts, not the author of the post.
+    let user_id: i32 = match identity.id() {
+        Ok(user_id) => match user_id.parse() {
+            Ok(id) => id,
+            Err(err) => {
+                error!("{err}");
+                return HttpResponse::InternalServerError().body(err.to_string())
+            }
+        },
+        Err(err) => {
+            error!("User id not found: {err}");
+            return HttpResponse::NotFound().body(err.to_string())
+        }
+    };
+
+    let reaction = Reaction {
+        reaction_id: req_reaction.reaction_id,
+        user_id,
+        commit_id: req_reaction.commit_id,
+        active: req_reaction.active
+    };
+
+    match db.post_reaction(reaction).await {
         Ok(reaction) => HttpResponse::Ok().json(reaction),
         Err(err) => {
             error!("{err}");

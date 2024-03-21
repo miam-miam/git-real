@@ -71,14 +71,14 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
     }
 
     function updateReactionState() {
-        fetch(`http://localhost:3001/api/commit/${props.id}/reactions`, {
+        fetch(`http://localhost:3001/api/commits/${props.id}/reactions`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'applications/json'
             }
         })
             .then((res) => res.json())
-            .then((reactions) => setReactions(reactions))
+            .then((reactions: IReactionState) => setReactions(reactions))
             .catch((err) => console.error(err))
     }
 
@@ -91,20 +91,20 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
             }
         })
             .then((res) => res.json())
-            .then((reactions) => setReactions(reactions || undefined))
+            .then((userReactions: IUserReactions) => setUserReactions(userReactions))
             .catch((err) => console.error(err))
     }
 
-    function sendReaction(key: string) {
+    function sendReaction(key: string, active: boolean) {
         fetch('http://localhost:3001/api/reactions', {
             method: 'POST',
-            // credentials: "include",
+            credentials: "include",
             body: JSON.stringify({
-                user_id: props.user_id,
+                // user_id: props.user_id,
                 commit_id: props.id,
                 reaction_id: Object.keys(reactions).indexOf(key),
                 // active: false,
-                active: !userReactions[key as keyof typeof reactions]
+                active
             }),
             headers: {
                 'Content-Type': 'application/json'
@@ -141,53 +141,51 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
         if (value === 0) return null
 
         const onClick = async () => {
-            sendReaction(key);
-            updateReactionState();
-            updateUserReactions();
+            if (userReactions[key as keyof typeof reactions]) {
+                setUserReactions({...userReactions, [key]: false})
+                setReactions({...reactions, [key]: value - 1})
+
+                // await fetch('http://localhost:3001/api/reactions', {
+                //     method: 'POST',
+                //     credentials: "include",
+                //     body: JSON.stringify({
+                //         user_id: props.user_id,
+                //         commit_id: props.id,
+                //         reaction_id: Object.keys(reactions).indexOf(key),
+                //         active: false
+                //     }),
+                //     headers: {
+                //         'Content-Type': 'application/json'
+                //     }
+                // })
+
+                sendReaction(key, false);
+            } else {
+                sendReaction(key, true);
+            }
+
+            // setUserReactions({...userReactions, [key]: true})
+            // setReactions({...reactions, [key]: value + 1})
+
+            // await fetch('http://localhost:3001/api/reactions', {
+            //     method: 'POST',
+            //     credentials: "include",
+            //     body: JSON.stringify({
+            //         user_id: props.user_id,
+            //         commit_id: props.id,
+            //         reaction_id: Object.keys(reactions).indexOf(key),
+            //         active: true
+            //     }),
+            //     headers: {
+            //         'Content-Type': 'application/json'
+            //     }
+            // })
+            // sendReaction(key, true)
+
         }
 
-
-        //
-        //
-        //     if (userReactions[key as keyof typeof reactions]) {
-        //         // setUserReactions({...userReactions, [key]: false})
-        //         // setReactions({...reactions, [key]: value - 1})
-        //
-        //         await fetch('http://localhost:3001/api/reactions', {
-        //             method: 'POST',
-        //             credentials: "include",
-        //             body: JSON.stringify({
-        //                 user_id: props.user_id,
-        //                 commit_id: props.id,
-        //                 reaction_id: Object.keys(reactions).indexOf(key),
-        //                 active: false
-        //             }),
-        //             headers: {
-        //                 'Content-Type': 'application/json'
-        //             }
-        //         })
-        //
-        //         return
-        //     }
-        //
-        //     setUserReactions({...userReactions, [key]: true})
-        //     setReactions({...reactions, [key]: value + 1})
-        //
-        //     await fetch('http://localhost:3001/api/reactions', {
-        //         method: 'POST',
-        //         credentials: "include",
-        //         body: JSON.stringify({
-        //             user_id: props.user_id,
-        //             commit_id: props.id,
-        //             reaction_id: Object.keys(reactions).indexOf(key),
-        //             active: true
-        //         }),
-        //         headers: {
-        //             'Content-Type': 'application/json'
-        //         }
-        //     })
-        //
-        // }
+        updateReactionState();
+        updateUserReactions();
 
         return (
             <button key={index} onClick={onClick} type="button"
@@ -197,59 +195,59 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
         )
     })
 
-    // const unusedReactionsList = Object.entries(reactions).map((reaction, index) => {
-    //     const [key, value] = reaction
-    //     if (value !== 0) return null
-    //
-    //     const onClick = async () => {
-    //
-    //         if (userReactions[key as keyof typeof reactions]) {
-    //             setUserReactions({...userReactions, [key]: false})
-    //             setReactions({...reactions, [key]: value - 1})
-    //
-    //             await fetch('http://localhost:3001/api/reactions', {
-    //                 method: 'POST',
-    //                 credentials: "include",
-    //                 body: JSON.stringify({
-    //                     user_id: props.user_id,
-    //                     commit_id: props.id,
-    //                     reaction_id: Object.keys(reactions).indexOf(key),
-    //                     active: false
-    //                 }),
-    //                 headers: {
-    //                     'Content-Type': 'application/json'
-    //                 }
-    //             })
-    //
-    //             return
-    //         }
-    //
-    //         setUserReactions({...userReactions, [key]: true})
-    //         setReactions({...reactions, [key]: value + 1})
-    //
-    //         await fetch('http://localhost:3001/api/reactions', {
-    //             method: 'POST',
-    //             credentials: "include",
-    //             body: JSON.stringify({
-    //                 user_id: props.user_id,
-    //                 commit_id: props.id,
-    //                 reaction_id: Object.keys(reactions).indexOf(key),
-    //                 active: true
-    //             }),
-    //             headers: {
-    //                 'Content-Type': 'application/json'
-    //             }
-    //         })
-    //
-    //     }
-    //
-    //     return (
-    //         <button key={index} onClick={onClick} type="button"
-    //                 className={`${blur} h-12 px-4 text-xl inline-flex items-center font-semibold rounded-full ${userReactions[key as keyof typeof reactions] ? 'bg-blue-700' : ''} text-white hover:bg-blue-700`}>
-    //             {emojiList[key as keyof typeof reactions]}
-    //         </button>
-    //     )
-    // })
+    const unusedReactionsList = Object.entries(reactions).map((reaction, index) => {
+        const [key, value] = reaction
+        if (value !== 0) return null
+
+        const onClick = async () => {
+
+            if (userReactions[key as keyof typeof reactions]) {
+                setUserReactions({...userReactions, [key]: false})
+                setReactions({...reactions, [key]: value - 1})
+
+                await fetch('http://localhost:3001/api/reactions', {
+                    method: 'POST',
+                    credentials: "include",
+                    body: JSON.stringify({
+                        user_id: props.user_id,
+                        commit_id: props.id,
+                        reaction_id: Object.keys(reactions).indexOf(key),
+                        active: false
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+
+                return
+            }
+
+            setUserReactions({...userReactions, [key]: true})
+            setReactions({...reactions, [key]: value + 1})
+
+            await fetch('http://localhost:3001/api/reactions', {
+                method: 'POST',
+                credentials: "include",
+                body: JSON.stringify({
+                    user_id: props.user_id,
+                    commit_id: props.id,
+                    reaction_id: Object.keys(reactions).indexOf(key),
+                    active: true
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+
+        }
+
+        return (
+            <button key={index} onClick={onClick} type="button"
+                    className={`${blur} h-12 px-4 text-xl inline-flex items-center font-semibold rounded-full ${userReactions[key as keyof typeof reactions] ? 'bg-blue-700' : ''} text-white hover:bg-blue-700`}>
+                {emojiList[key as keyof typeof reactions]}
+            </button>
+        )
+    })
 
 
     return (
@@ -301,7 +299,7 @@ export const Post = ({props, locked}: { props: ICommit, locked: boolean }) => {
                             {selectEmojiOpen ? '-' : '+'}
                         </div>
                     </button>
-                    {/*{selectEmojiOpen && unusedReactionsList}*/}
+                    {selectEmojiOpen && unusedReactionsList}
                 </div>
             </div>
         </div>
