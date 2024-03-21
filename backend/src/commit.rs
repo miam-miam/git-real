@@ -24,8 +24,8 @@ pub struct ReqCommit {
     pub language: Language,
 }
 
-#[derive(Serialize, Deserialize, Default)]
-pub struct ReactionStatus {
+#[derive(Serialize, Deserialize, Default, Debug)]
+pub struct ReactionState {
     pub heart: i32,
     pub rocket: i32,
     pub thumbsup: i32,
@@ -37,18 +37,39 @@ pub struct ReactionStatus {
     pub nerd: i32
 }
 
-
-#[derive(Serialize, Deserialize, sqlx::Type)]
-pub struct ReactionTuple {
-    pub reaction_id: i32,
-    pub user_id: i32,
-    pub commit_id: i32,
+#[derive(Serialize, Deserialize, Default, Debug)]
+pub struct UserReactions {
+    pub heart: bool,
+    pub rocket: bool,
+    pub thumbsup: bool,
+    pub thumbsdown: bool,
+    pub skull: bool,
+    pub trash: bool,
+    pub tada: bool,
+    pub facepalm: bool,
+    pub nerd: bool
 }
 
-#[derive(Serialize, Deserialize, sqlx::Type)]
+
+// #[derive(Serialize, Deserialize, sqlx::Type, Debug)]
+// pub struct ReactionTuple {
+//     pub reaction_id: i32,
+//     pub user_id: i32,
+//     pub commit_id: i32,
+// }
+
+#[derive(Serialize, Deserialize, sqlx::Type, Debug)]
 pub struct Reaction {
     pub reaction_id: i32,
     pub user_id: i32,
+    pub commit_id: i32,
+    pub active: bool
+}
+
+// Used for the API endpoint
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ReqReaction {
+    pub reaction_id: i32,
     pub commit_id: i32,
     pub active: bool
 }

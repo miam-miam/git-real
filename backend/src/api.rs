@@ -1,5 +1,6 @@
+use std::convert::identity;
 use crate::challenge::{DbChallenge, ResChallenge};
-use crate::commit::{Reaction, ReqCommit, ResCommit};
+use crate::commit::{Reaction, ReqCommit, ReqReaction, ResCommit};
 use crate::executor;
 use crate::executor::Language;
 use crate::state::AppState;
@@ -7,7 +8,10 @@ use actix_identity::Identity;
 use actix_web::cookie::time::macros::date;
 use actix_web::web::{Data, Json, Path};
 use actix_web::{get, post, web, HttpResponse, Scope};
+use actix_web::http::header::ACCESS_CONTROL_ALLOW_ORIGIN;
 use chrono::Utc;
+use log::error;
+use nom::complete::bool;
 use nom::HexDisplay;
 use rand::RngCore;
 use sqlx::Error;
@@ -24,6 +28,8 @@ pub fn api_routes() -> Scope {
         .service(get_commit_reactions)
         .service(get_user_commits)
         .service(get_commits)
+        .service(get_commit_reactions_of_client)
+        .service(get_latest_challenge_commits)
 }
 
 #[get("/")]
@@ -35,12 +41,19 @@ async fn hello() -> HttpResponse {
 async fn get_current_challenge(db: Data<AppState>, identity: Identity) -> HttpResponse {
     let user_id: i32 = match identity.id() {
         Ok(user_id) => user_id.parse().unwrap(),
-        _ => return HttpResponse::NotFound().body("User id not found."),
+        _ => {
+            error!("User id not found");
+            return HttpResponse::NotFound().body("User id not found.")
+        },
     };
 
+    // we need to get the user in order to set the default language
     let user = match db.get_user_by_id(user_id).await {
         Ok(user) => user,
-        Err(err) => return HttpResponse::InternalServerError().body(err.to_string()),
+        Err(err) => {
+            error!("{err}");
+            return HttpResponse::InternalServerError().body(err.to_string())
+        },
     };
 
     let data = db.get_current_challenge().await;
@@ -61,7 +74,10 @@ async fn get_current_challenge(db: Data<AppState>, identity: Identity) -> HttpRe
             };
             HttpResponse::Ok().json(res)
         }
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+        Err(err) => {
+            error!("{err}");
+            HttpResponse::InternalServerError().body(err.to_string())
+        },
     }
 }
 
@@ -73,12 +89,18 @@ async fn submit_commit(
 ) -> HttpResponse {
     let user_id = match identity.id() {
         Ok(user_id) => user_id.parse().unwrap(),
-        _ => return HttpResponse::NotFound().body("User id not found."),
+        _ => {
+            error!("User id not found");
+            return HttpResponse::NotFound().body("User id not found.")
+        },
     };
 
     let challenge = match db.get_current_challenge().await {
         Ok(challenge) => challenge,
-        Err(err) => return HttpResponse::InternalServerError().body(err.to_string()),
+        Err(err) => {
+            error!("{err}");
+            return HttpResponse::InternalServerError().body(err.to_string())
+        },
     };
 
     let (is_valid, _exec_result) = match executor::test_language(
@@ -89,7 +111,10 @@ async fn submit_commit(
     .await
     {
         Ok(tuple) => tuple,
-        Err(err) => return HttpResponse::InternalServerError().body(err.to_string()),
+        Err(err) => {
+            error!("{err}");
+            return HttpResponse::InternalServerError().body(err.to_string())
+        },
     };
 
     let mut data = [0u8; 16];
@@ -110,7 +135,10 @@ async fn submit_commit(
 
     match db.add_commit(res).await {
         Ok(commit) => HttpResponse::Ok().json(commit),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+        Err(err) => {
+            error!("{err}");
+            HttpResponse::InternalServerError().body(err.to_string())
+        },
     }
 }
 
@@ -122,7 +150,10 @@ async fn get_commits(db: Data<AppState>, identity: Identity) -> HttpResponse {
 
     match db.get_past_challenge_commits().await {
         Ok(commits) => HttpResponse::Ok().json(commits),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+        Err(err) => {
+            error!("{err}");
+            HttpResponse::InternalServerError().body(err.to_string())
+        },
     }
 }
 
@@ -130,21 +161,33 @@ async fn get_commits(db: Data<AppState>, identity: Identity) -> HttpResponse {
 async fn get_commit_by_id(db: Data<AppState>, commit_id: Path<i32>) -> HttpResponse {
     match db.get_commit_by_id(commit_id.into_inner()).await {
         Ok(commit) => HttpResponse::Ok().json(commit),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+        Err(err) => {
+            error!("{err}");
+            HttpResponse::InternalServerError().body(err.to_string())
+        },
     }
 }
 
 #[get("/me")]
 async fn current_user(db: Data<AppState>, identity: Identity) -> HttpResponse {
     let user_id = match identity.id() {
-        Ok(user_id) => user_id.parse().unwrap(),
-        _ => return HttpResponse::NotFound().body("User id not found."),
+        Ok(user_id) => match user_id.parse() {
+            Ok(id) => id,
+            _ => {
+                error!("User id is not a number");
+                return HttpResponse::NotFound().body("User id is not a number.")
+            }
+        },
+        _ => {
+            error!("User id not found in the identity");
+            return HttpResponse::NotFound().body("User id not found.")
+        },
     };
 
     match db.get_me_info(user_id).await {
         Ok(user) => HttpResponse::Ok().json(user),
         Err(err) => {
-            eprintln!("{err}");
+            error!("{err}");
             HttpResponse::InternalServerError().body(err.to_string())
         }
     }
@@ -158,39 +201,89 @@ async fn current_user(db: Data<AppState>, identity: Identity) -> HttpResponse {
 //     }
 // }
 
+// #[get("/challenges/{id}/commits")]
+// async fn get_past_challenge_commits(db: Data<AppState>, challenge_id: Path<i32>) -> HttpResponse {
+//     match db.get_past_challenge_commits().await {
+//         Ok(commits) => HttpResponse::Ok().json(commits),
+//         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+//     }
+// }
+
 #[get("/challenges/{id}")]
 async fn get_past_challenge(db: Data<AppState>, challenge_id: Path<i32>) -> HttpResponse {
     match db.get_challenge_by_id(challenge_id.into_inner()).await {
         Ok(challenge) => HttpResponse::Ok().json(challenge),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+        Err(err) => {
+            error!("{err}");
+            HttpResponse::InternalServerError().body(err.to_string())
+        },
     }
 }
 
-#[get("/challenges/{id}/commits")]
-async fn get_past_challenge_commits(db: Data<AppState>, challenge_id: Path<i32>) -> HttpResponse {
+#[get("/challenge/commits")]
+async fn get_latest_challenge_commits(db: Data<AppState>) -> HttpResponse {
     match db.get_past_challenge_commits().await {
         Ok(commits) => HttpResponse::Ok().json(commits),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+        Err(err) => {
+            error!("{err}");
+            HttpResponse::InternalServerError().body(err.to_string())
+        },
     }
 }
+
 
 #[get("/commits/{id}/reactions")]
 async fn get_commit_reactions(
     db: Data<AppState>,
-    identity: Identity,
+    // identity: Identity,
     challenge_id: Path<i32>,
 ) -> HttpResponse {
+    // let user_id: i32 = match identity.id() {
+    //     Ok(user_id) => user_id.parse().unwrap(),
+    //     _ => return HttpResponse::NotFound().body("User id not found."),
+    // };
+
+    match db
+        .get_commit_reactions(challenge_id.into_inner())
+        .await
+    {
+        Ok(reaction_state) => HttpResponse::Ok().json(reaction_state),
+        Err(err) => {
+            error!("{err}");
+            HttpResponse::InternalServerError().body(err.to_string())
+        },
+    }
+}
+
+#[get("/commits/{id}/user-reactions")]
+async fn get_commit_reactions_of_client(
+    db: Data<AppState>,
+    identity: Identity,
+    challenge_id: Path<i32>
+) -> HttpResponse {
     let user_id: i32 = match identity.id() {
-        Ok(user_id) => user_id.parse().unwrap(),
-        _ => return HttpResponse::NotFound().body("User id not found."),
+        Ok(user_id) => match user_id.parse() {
+            Ok(id) => id,
+            Err(err) => {
+                error!("Could not parse user id: {err}");
+                return HttpResponse::InternalServerError().body(err.to_string())
+            }
+        },
+        Err(err) => {
+            error!("{err}");
+            return HttpResponse::NotFound().body(err.to_string())
+        },
     };
 
     match db
-        .get_commit_reactions(user_id, challenge_id.into_inner())
+        .get_commit_reactions_by_user(user_id, challenge_id.into_inner())
         .await
     {
-        Ok(reactions) => HttpResponse::Ok().json(reactions),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+        Ok(user_reactions) => HttpResponse::Ok().json(user_reactions),
+        Err(err) => {
+            error!("{err}");
+            HttpResponse::InternalServerError().body(err.to_string())
+        }
     }
 }
 
@@ -198,7 +291,10 @@ async fn get_commit_reactions(
 async fn get_user(db: Data<AppState>, user_id: Path<i64>) -> HttpResponse {
     match db.get_user(user_id.into_inner()).await {
         Ok(user) => HttpResponse::Ok().json(user),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+        Err(err) => {
+            error!("{err}");
+            HttpResponse::InternalServerError().body(err.to_string())
+        },
     }
 }
 
@@ -206,14 +302,42 @@ async fn get_user(db: Data<AppState>, user_id: Path<i64>) -> HttpResponse {
 async fn get_user_commits(db: Data<AppState>, username: Path<i64>) -> HttpResponse {
     match db.get_commit_by_user_id(username.into_inner()).await {
         Ok(user) => HttpResponse::Ok().json(user),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+        Err(err) => {
+            error!("{err}");
+            HttpResponse::InternalServerError().body(err.to_string())
+        },
     }
 }
 
 #[post("/reactions")]
-async fn post_reaction(db: Data<AppState>, reaction: Json<Reaction>) -> HttpResponse {
-    match db.post_reaction(reaction.into_inner()).await {
+async fn post_reaction(db: Data<AppState>, identity: Identity, req_reaction: Json<ReqReaction>) -> HttpResponse {
+    // Represents the user who reacts, not the author of the post.
+    let user_id: i32 = match identity.id() {
+        Ok(user_id) => match user_id.parse() {
+            Ok(id) => id,
+            Err(err) => {
+                error!("{err}");
+                return HttpResponse::InternalServerError().body(err.to_string())
+            }
+        },
+        Err(err) => {
+            error!("User id not found: {err}");
+            return HttpResponse::NotFound().body(err.to_string())
+        }
+    };
+
+    let reaction = Reaction {
+        reaction_id: req_reaction.reaction_id,
+        user_id,
+        commit_id: req_reaction.commit_id,
+        active: req_reaction.active
+    };
+
+    match db.post_reaction(reaction).await {
         Ok(reaction) => HttpResponse::Ok().json(reaction),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+        Err(err) => {
+            error!("{err}");
+            HttpResponse::InternalServerError().body(err.to_string())
+        },
     }
 }

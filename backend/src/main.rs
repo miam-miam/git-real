@@ -19,9 +19,15 @@ use oauth2::{AuthUrl, ClientId, ClientSecret, TokenUrl};
 use sqlx::postgres::PgPoolOptions;
 use state::AppState;
 use std::env;
+use log4rs::append::console::ConsoleAppender;
+use log4rs::append::file::FileAppender;
+use log4rs::encode::pattern::PatternEncoder;
+use log::info;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    setup_logging();
+
     dotenv().ok();
     let database_url = env!("DATABASE_URL");
     let pool = PgPoolOptions::new()
@@ -45,7 +51,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         let cors = Cors::default()
-            .allowed_origin("localhost:3000")
+            .allowed_origin("http://localhost:3000")
             .allow_any_method()
             .supports_credentials()
             .allow_any_header()
@@ -65,6 +71,11 @@ async fn main() -> std::io::Result<()> {
     .bind("localhost:3001")?
     .run()
     .await
+}
+
+fn setup_logging() {
+    log4rs::init_file("log4rs.yml", Default::default()).unwrap();
+    info!("Logging set up!");
 }
 
 #[cfg(test)]

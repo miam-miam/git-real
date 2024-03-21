@@ -23,7 +23,7 @@ export const Profile = () => {
     useEffect(() => {
         fetch('http://localhost:3001/api/me', {
             method: 'GET',
-            credentials: "include"
+            credentials: "include",
         })
             .then((res) => res.json())
             .then((data) => {
@@ -32,6 +32,7 @@ export const Profile = () => {
             })
             .catch((err) => {
                 console.error(err)
+                console.log("error received", err)
             })
     }, [])
 
