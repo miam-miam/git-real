@@ -93,7 +93,7 @@ To deploy this project run
 
 ## The team
 
-- [@miam-miam100](https://github.com/miam-miam100) Backend
+- [@miam-miam](https://github.com/miam-miam) Backend
 - [@viktaur](https://github.com/viktaur) Backend
 - [@Ortovoxx](https://github.com/Ortovoxx) Frontend
 
